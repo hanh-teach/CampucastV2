@@ -260,9 +260,109 @@ app.get("/api/share/:id", async (req, res): Promise<any> => {
   }
 });
 
+app.get("/api/youtube", async (req, res) => {
+  const { q, chart } = req.query;
+  const cookieHeader = req.headers.cookie;
+  const sessionId = cookieHeader?.split('; ').find(row => row.startsWith('sessionId='))?.split('=')[1];
+  const accessToken = sessionId ? oauthTokens.get(sessionId) : null;
+  const apiKey = process.env.YOUTUBE_API_KEY;
+
+  try {
+    let url = "https://www.googleapis.com/youtube/v3/";
+    if (chart === "mostPopular") {
+      url += `videos?part=snippet,contentDetails,statistics&chart=mostPopular&regionCode=VN&maxResults=10`;
+    } else if (q) {
+      url += `search?part=snippet&q=${encodeURIComponent(q as string)}&type=video&maxResults=10`;
+    } else {
+      return res.status(400).json({ error: "Invalid parameters." });
+    }
+
+    if (accessToken) {
+      url += `&access_token=${accessToken}`;
+    } else if (apiKey) {
+      url += `&key=${apiKey}`;
+    } else {
+      return res.status(500).json({ error: "YouTube API not configured." });
+    }
+
+    const response = await fetch(url);
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error("YouTube API error:", error);
+    res.status(500).json({ error: "Failed to fetch from YouTube API." });
+  }
+});
+
 // ===== WS VOICE SHORT-LIVED TOKENS & RATE LIMITING =====
 const voiceTokens = new Map<string, number>(); // token -> expiryTimestamp
 const wsConnectionTracker = new Map<string, { count: number; resetTime: number }>();
+
+// ===== OAUTH ROUTES =====
+// In-memory store for tokens (not persistent, for demonstration)
+const oauthTokens = new Map<string, string>(); // sessionId -> accessToken
+
+app.get('/api/auth/url', (req, res) => {
+  const redirectUri = `${req.protocol}://${req.get('host')}/auth/callback`;
+  const params = new URLSearchParams({
+    client_id: process.env.GOOGLE_CLIENT_ID!,
+    redirect_uri: redirectUri,
+    response_type: 'code',
+    scope: 'https://www.googleapis.com/auth/youtube.readonly',
+    access_type: 'offline',
+    prompt: 'consent'
+  });
+
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+  res.json({ url: authUrl });
+});
+
+app.get('/auth/callback', async (req, res) => {
+  const { code } = req.query;
+  if (!code) {
+    return res.status(400).send("No code provided.");
+  }
+  
+  try {
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code: code as string,
+        client_id: process.env.GOOGLE_CLIENT_ID!,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+        redirect_uri: `${req.protocol}://${req.get('host')}/auth/callback`,
+        grant_type: 'authorization_code'
+      })
+    });
+    
+    const tokens = await tokenResponse.json();
+    const sessionId = Math.random().toString(36).substring(7); // Simple session ID
+    oauthTokens.set(sessionId, tokens.access_token);
+
+    res.cookie('sessionId', sessionId, { httpOnly: true, secure: true, sameSite: 'none' });
+    
+    res.send(`
+      <html>
+        <body>
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({ type: 'OAUTH_AUTH_SUCCESS' }, '*');
+              window.close();
+            } else {
+              window.location.href = '/';
+            }
+          </script>
+          <p>Authentication successful. This window should close automatically.</p>
+        </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error("OAuth callback error:", error);
+    res.status(500).send("Authentication failed.");
+  }
+});
+
 
 function isWsRateLimited(ip: string): boolean {
   const now = Date.now();

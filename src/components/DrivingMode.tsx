@@ -139,7 +139,7 @@ export default function DrivingMode({
   onDuckingChange
 }: DrivingModeProps) {
 
-  const { preferences } = useUserPreferences();
+  const { preferences, updatePreferences } = useUserPreferences();
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [localFeedback, setLocalFeedback] = useState("");
   const [activeView, setActiveView] = useState<"briefing" | "youtube">("briefing");
@@ -409,11 +409,79 @@ export default function DrivingMode({
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map((i) => (
                     <motion.div
                       key={i}
-                      animate={{ height: isPlaying ? [10, 80, 10] : 6 }}
-                      transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.08 }}
-                      className="w-1.5 md:w-2.5 bg-blue-500 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+                      animate={{ height: isPlaying ? [10, 80, 10] : (isListening ? [8, 30, 8] : 6) }}
+                      transition={{ duration: isPlaying ? 0.6 : 1.2, repeat: Infinity, delay: i * 0.08 }}
+                      className={cn(
+                        "w-1.5 md:w-2.5 rounded-full transition-all duration-300",
+                        isPlaying 
+                          ? "bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]" 
+                          : (isListening ? "bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]" : "bg-white/10")
+                      )}
                     />
                   ))}
+                </div>
+
+                {/* Voice Assistant Listening / Error Status Overlay */}
+                <div className="mt-4 flex flex-col items-center gap-4 w-full max-w-md">
+                  {micError ? (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-4 rounded-xl bg-red-950/80 border border-red-500/30 text-center space-y-2 w-full"
+                    >
+                      <div className="flex items-center justify-center gap-2 text-red-400 font-bold text-xs uppercase tracking-wider">
+                        <AlertTriangle className="w-4 h-4" />
+                        <span>{uiLanguage === "vi" ? "LỖI MICROPHONE" : "MICROPHONE ERROR"}</span>
+                      </div>
+                      <p className="text-xs text-red-200 font-semibold leading-relaxed px-2">
+                        {micError}
+                      </p>
+                      <button 
+                        onClick={() => {
+                          setIsContinuous(true);
+                          startSpeechRecognition();
+                        }}
+                        className="mt-2 px-4 py-1.5 bg-red-600 hover:bg-red-500 text-white text-[10px] font-black uppercase tracking-widest rounded-lg transition-all active:scale-95"
+                      >
+                        {uiLanguage === "vi" ? "CẤP QUYỀN LẠI / THỬ LẠI" : "GRANT ACCESS / RETRY"}
+                      </button>
+                    </motion.div>
+                  ) : isListening ? (
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-blue-950/20 border border-blue-500/20 w-full text-center"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">
+                          {uiLanguage === "vi" ? "TRỢ LÝ ĐANG LẮNG NGHE" : "ASSISTANT LISTENING"}
+                        </span>
+                      </div>
+                      
+                      <p className="text-xs text-blue-200 font-medium max-w-xs leading-relaxed mt-1">
+                        {preferences.wakeWordEnabled !== false ? (
+                          uiLanguage === "vi" ? (
+                            <>Nói: <span className="text-white font-extrabold font-mono">"Cast ơi, [lệnh]"</span><br /><span className="text-[10px] text-white/50">(Ví dụ: "Cast ơi phát", "Cast ơi tạm dừng")</span></>
+                          ) : (
+                            <>Say: <span className="text-white font-extrabold font-mono">"Hey Cast, [command]"</span><br /><span className="text-[10px] text-white/50">(e.g. "Hey Cast play", "Hey Cast pause")</span></>
+                          )
+                        ) : (
+                          uiLanguage === "vi" ? (
+                            <>Nói trực tiếp: <span className="text-white font-extrabold font-mono">"phát", "tạm dừng", "qua bài"</span></>
+                          ) : (
+                            <>Say directly: <span className="text-white font-extrabold font-mono">"play", "pause", "next"</span></>
+                          )
+                        )}
+                      </p>
+                    </motion.div>
+                  ) : (
+                    <div className="text-[10px] font-bold text-white/30 uppercase tracking-[0.15em] text-center">
+                      {uiLanguage === "vi" 
+                        ? "Micro đang tắt • Nhấn 'VOICE OFF' bên dưới để bật rảnh tay" 
+                        : "Voice Control Off • Tap 'VOICE OFF' below to enable hands-free"}
+                    </div>
+                  )}
                 </div>
               </motion.div>
             </div>
@@ -439,6 +507,23 @@ export default function DrivingMode({
               <div className="w-full text-center pb-2 text-white/30 text-xs font-semibold uppercase tracking-widest border-b border-white/10 mb-2 mt-4">
                 {uiLanguage === "vi" ? "TÙY CHỌN" : "OPTIONS"}
               </div>
+              
+              <button 
+                onClick={() => updatePreferences({ wakeWordEnabled: !preferences.wakeWordEnabled })} 
+                className={cn(
+                  "flex items-center gap-2 w-full py-3.5 px-2 justify-center rounded-xl font-black text-[10px] md:text-xs transition-all border active:scale-95 uppercase tracking-widest",
+                  preferences.wakeWordEnabled !== false 
+                    ? "bg-blue-600/20 border-blue-500/40 text-blue-400" 
+                    : "bg-white/5 border-white/10 text-white/60 hover:bg-white/10"
+                )}
+              >
+                <span>
+                  {uiLanguage === "vi" 
+                    ? `ĐÁNH THỨC 'CAST ƠI': ${preferences.wakeWordEnabled !== false ? "BẬT" : "TẮT"}` 
+                    : `WAKE WORD: ${preferences.wakeWordEnabled !== false ? "ON" : "OFF"}`}
+                </span>
+              </button>
+
               <button onClick={onRetryGeneration} className="flex items-center gap-2 w-full py-3 px-2 justify-center rounded-xl font-semibold text-sm transition-all bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 active:scale-95">
                 <RefreshCw className="w-4 h-4" />
                 <span>{uiLanguage === "vi" ? "LÀM MỚI" : "REFRESH"}</span>

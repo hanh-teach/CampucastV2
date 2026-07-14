@@ -26,6 +26,7 @@ interface UseAssistantProps {
   step?: string;
   isDrivingMode?: boolean;
   onAction?: (action: string, param: any) => void;
+  preferences: any;
 }
 
 // Zod validation schema for safe parsing of model responses
@@ -93,6 +94,25 @@ export function parseAssistantResponse(rawText: string): AssistantResponse {
   }
 }
 
+// Helper for API calls with basic retry mechanism
+async function fetchWithRetry(url: string, options: RequestInit, retries = 3, delay = 1000): Promise<Response> {
+  try {
+    const response = await fetch(url, options);
+    if (response.status === 429 && retries > 0) {
+      console.warn(`[fetchWithRetry] Rate limited (429). Retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return fetchWithRetry(url, options, retries - 1, delay * 2);
+    }
+    return response;
+  } catch (error) {
+    if (retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return fetchWithRetry(url, options, retries - 1, delay * 2);
+    }
+    throw error;
+  }
+}
+
 export function useAssistant({
   uiLanguage,
   getApiUrl,
@@ -102,7 +122,8 @@ export function useAssistant({
   activeTab,
   step,
   isDrivingMode = false,
-  onAction
+  onAction,
+  preferences
 }: UseAssistantProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -148,7 +169,7 @@ export function useAssistant({
       const topPrefs = await getTopPreferences(5);
       const preferencesPayload = topPrefs.map((pref) => pref.topic);
 
-      const response = await fetch(getApiUrl("/api/assistant-chat"), {
+      const response = await fetchWithRetry(getApiUrl("/api/assistant-chat"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -350,6 +371,11 @@ export function useAssistant({
       const utterance = new SpeechSynthesisUtterance(plainText);
       utterance.lang = uiLanguage === "vi" ? "vi-VN" : "en-US";
 
+      if (preferences) {
+        utterance.rate = preferences.rate || 1.0;
+        utterance.pitch = preferences.pitch || 1.0;
+      }
+
       const voices = window.speechSynthesis.getVoices();
       const targetLang = uiLanguage === "vi" ? "vi" : "en";
       const voice = voices.find(
@@ -462,7 +488,7 @@ export function useAssistant({
       const topArticles = articles.slice(0, 10);
       const formattedContext = formatArticlesForPrompt(topArticles, uiLanguage);
 
-      const response = await fetch(getApiUrl("/api/assistant-chat"), {
+      const response = await fetchWithRetry(getApiUrl("/api/assistant-chat"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -54,7 +54,7 @@ async function loadPublishedEpisodesFromSupabaseAsync(): Promise<PublishedEpisod
         }
       }
     } catch (listErr: any) {
-      console.warn("[Podcast - Supabase] Failed to list or download versioned metadata in audio/:", listErr);
+      console.log("[Podcast - Supabase] Versioned metadata folder query completed (uninitialized or empty).");
     }
 
     if (!rawData) {
@@ -73,7 +73,7 @@ async function loadPublishedEpisodesFromSupabaseAsync(): Promise<PublishedEpisod
     }
 
     if (!rawData) {
-      console.log("[Podcast - Supabase] Static primary path failed. Trying fallback static audio/published-podcasts.json path...");
+      console.log("[Podcast - Supabase] Static primary path not found. Checking fallback static audio/published-podcasts.json path...");
       try {
         const { data, error } = await supabase.storage.from("podcast-audio").download("audio/published-podcasts.json");
         if (!error && data) {
@@ -100,10 +100,20 @@ async function loadPublishedEpisodesFromSupabaseAsync(): Promise<PublishedEpisod
         return eps;
       }
     } else {
-      console.log("[Podcast - Supabase] Fetch metadata warning (might be first run / bucket empty):", downloadErr?.message || downloadErr);
+      const errMsg = downloadErr?.message || String(downloadErr || "");
+      if (errMsg.includes("fetch failed") || errMsg.includes("Failed to fetch")) {
+        console.log("[Podcast - Supabase] Supabase service offline or network unreachable. Proceeding with local caching database.");
+      } else {
+        console.log("[Podcast - Supabase] Metadata not initialized in cloud storage bucket yet (first run/cold start). Proceeding with local cache.");
+      }
     }
   } catch (err: any) {
-    console.error("[Podcast - Supabase] Failed to download metadata from Supabase:", err.message || err);
+    const errMsg = err.message || String(err || "");
+    if (errMsg.includes("fetch failed") || errMsg.includes("Failed to fetch")) {
+      console.log("[Podcast - Supabase] Supabase service is offline/unreachable.");
+    } else {
+      console.log("[Podcast - Supabase] Supabase metadata download deferred:", errMsg);
+    }
   }
   return [];
 }

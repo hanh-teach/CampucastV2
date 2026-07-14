@@ -16,9 +16,10 @@ import { User as UserType } from "@supabase/supabase-js";
 import { cn } from "../lib/utils";
 import { colors } from "../foundation/tokens/colors";
 import { useSession } from "../hooks/useSession";
+import { useI18n } from "../hooks/useI18n";
 
 interface HeaderProps {
-  uiLanguage: "vi" | "en";
+  uiLanguage?: "vi" | "en";
   activeTab: string;
   activeBriefingTitle?: string | null;
   onSearchClick: () => void;
@@ -34,7 +35,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  uiLanguage,
+  uiLanguage: propLanguage,
   activeTab,
   activeBriefingTitle,
   onSearchClick,
@@ -49,6 +50,8 @@ export const Header: React.FC<HeaderProps> = ({
   user
 }) => {
   const { mission } = useSession();
+  const { t, lang: hookLanguage } = useI18n();
+  const uiLanguage = propLanguage || hookLanguage;
 
   return (
     <header className="sticky top-0 z-40 w-full bg-header-bg border-b border-border-subtle shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)] h-[68px]">

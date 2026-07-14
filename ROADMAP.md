@@ -39,6 +39,9 @@
   - Deliverables: `OPERATOR_INTENT_MODEL.md`, `PREFERENCE_TREE.md`, `SETTINGS_DECISION_FLOW.md`.
 
 ### 🚀 Release Milestones [PHASE B]
+- **Sprint STR-114: Cloud Storage Resilience & Cold-Start Polish [COMPLETED]** ✅
+  - Goal: Standardize cloud storage initialization logging and implement connection-aware failover mechanisms.
+  - Deliverables: Refactored `/api/podcasts` metadata loader with positive status markers, silent offline failover to local JSON database, and clean handling of first-run empty-bucket states.
 - **Sprint HUD-102: Intelligent Motion Detection & Auto-suggest Driving Mode [COMPLETED]** ✅
   - Goal: Implement a low-power, privacy-first client-side motion detection system to suggest entering the Driving HUD when commuting is detected.
   - Deliverables: Custom `useMotionDetection.ts` hook utilizing `navigator.geolocation.watchPosition` with Haversine speed fallback, non-intrusive motion-animated toast suggestion inside `App.tsx`, strict opt-in toggles under Driving Assistant mixer settings, and an extensive unit test suite with 100% code coverage.

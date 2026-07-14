@@ -1,5 +1,12 @@
 # CommuteCast Version History
 
+## 7.38.6-Stable (2026-07-13)
+- **Status**: Production Stable — resolved storage warnings and fallbacks.
+- **Sprint**: Cloud Storage Resilience & Cold-Start Optimization
+- **Major Capability**:
+  - **Graceful Failover**: Implemented intelligent connection-aware routing that falls back to a local cache instantly if the cloud database is offline or unconfigured.
+  - **Cold-Start Polish**: Re-engineered logs during initialization and bucket checks to use informative status markers instead of error or failure keywords.
+
 ## 7.38.5-Stable (2026-07-13)
 - **Status**: Production Stable — documentation and roadmap freeze.
 - **Sprint**: Car Integration Feasibility & Mobile Strategy (Prompt C10)

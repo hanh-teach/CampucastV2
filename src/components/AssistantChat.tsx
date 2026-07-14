@@ -21,9 +21,9 @@ import { useAssistant } from "../hooks/useAssistant";
 import { useAdaptive } from "../layouts/AdaptiveContext";
 import { DeviceType } from "../types";
 import { cn } from "../lib/utils";
+import { useI18n } from "../hooks/useI18n";
 
 interface AssistantChatProps {
-  uiLanguage: "vi" | "en";
   activeTab: string;
   step: string;
   isOpen: boolean;
@@ -34,6 +34,7 @@ interface AssistantChatProps {
   setNewsContent: (content: string) => void;
   onAction?: (action: string, param: any) => void;
   isDrivingMode?: boolean;
+  preferences: any;
 }
 
 const dict = {
@@ -90,7 +91,6 @@ const dict = {
 };
 
 export default function AssistantChat({
-  uiLanguage,
   activeTab,
   step,
   isOpen,
@@ -100,9 +100,11 @@ export default function AssistantChat({
   newsContent,
   setNewsContent,
   onAction,
-  isDrivingMode = false
+  isDrivingMode = false,
+  preferences
 }: AssistantChatProps) {
   const { device } = useAdaptive();
+  const { lang: uiLanguage } = useI18n();
   const isMobile = device === DeviceType.Mobile;
   const t = dict[uiLanguage === "vi" ? "vi" : "en"];
   
@@ -129,8 +131,10 @@ export default function AssistantChat({
     activeTab,
     step,
     isDrivingMode,
-    onAction
+    onAction,
+    preferences
   });
+
 
   const getWorkstationSuggestions = () => {
     if (uiLanguage === "vi") {

@@ -99,11 +99,72 @@ export const YouTubeEntertainmentTab: React.FC<YouTubeEntertainmentTabProps> = (
   voiceSearchQuery,
   onClearSearch
 }) => {
-  const [currentVideo, setCurrentVideo] = useState<YouTubeVideo | null>(MOCK_VIDEOS[0]);
+  const [currentVideo, setCurrentVideo] = useState<YouTubeVideo | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isParkedMode, setIsParkedMode] = useState(false);
   const [category, setCategory] = useState<CategoryType>("Trending");
   const [searchStatus, setSearchStatus] = useState<string>("");
+  const [videos, setVideos] = useState<YouTubeVideo[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const connectYouTube = async () => {
+    try {
+      const response = await fetch('/api/auth/url');
+      const { url } = await response.json();
+      const authWindow = window.open(url, 'oauth_popup', 'width=600,height=700');
+      
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data?.type === 'OAUTH_AUTH_SUCCESS') {
+          setIsAuthenticated(true);
+          window.removeEventListener('message', handleMessage);
+          fetchVideos(category);
+        }
+      };
+      window.addEventListener('message', handleMessage);
+    } catch (err) {
+      console.error("Failed to initiate OAuth:", err);
+    }
+  };
+
+  const fetchVideos = useCallback(async (cat: CategoryType, query?: string) => {
+    setIsLoading(true);
+    try {
+      let url = "/api/youtube";
+      if (cat === "Trending") url += "?chart=mostPopular";
+      else if (cat === "Search Results" && query) url += `?q=${encodeURIComponent(query)}`;
+      else url += `?q=${encodeURIComponent(cat === "AI Suggestions" ? "AI technology news" : "latest news")}`;
+      
+      const res = await fetch(url);
+      const data = await res.json();
+      
+      if (data.items) {
+        const mappedVideos: YouTubeVideo[] = data.items.map((item: any) => ({
+          id: item.id.videoId || item.id,
+          title: item.snippet.title,
+          channelTitle: item.snippet.channelTitle,
+          thumbnailUrl: item.snippet.thumbnails.high.url,
+          category: cat,
+          isAudioFriendly: true
+        }));
+        setVideos(mappedVideos);
+        if (mappedVideos.length > 0) setCurrentVideo(mappedVideos[0]);
+      } else if (data.error) {
+        console.error("YouTube API error:", data.error);
+        if (data.error.includes("401") || data.error.includes("403")) {
+          setIsAuthenticated(false);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch videos:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchVideos(category);
+  }, [category, fetchVideos]);
 
   const playerRef = React.useRef<any>(null);
   const isPlayerReadyRef = React.useRef<boolean>(false);
@@ -300,9 +361,8 @@ export const YouTubeEntertainmentTab: React.FC<YouTubeEntertainmentTabProps> = (
   }, [voiceSearchQuery, uiLanguage, onClearSearch]);
 
   const playlist = useMemo(() => {
-    const base = MOCK_VIDEOS.filter(v => (v.category === category || (category === "Search Results" && v.id === "jfKfPfyJRdk")) && v.isAudioFriendly);
-    return base.length > 0 ? base : MOCK_VIDEOS.filter(v => v.category === "AI Suggestions");
-  }, [category]);
+    return videos;
+  }, [videos]);
 
   const toggleParkedMode = () => setIsParkedMode(!isParkedMode);
 
@@ -405,6 +465,11 @@ export const YouTubeEntertainmentTab: React.FC<YouTubeEntertainmentTabProps> = (
 
       {/* CỘT PHẢI - Thanh danh mục dọc */}
       <div className="flex-[1] max-w-[200px] flex flex-col justify-start gap-3 pt-2">
+        {!isAuthenticated && (
+          <button onClick={connectYouTube} className="w-full text-center py-2 bg-red-600 rounded-lg text-white font-bold mb-4 hover:bg-red-700">
+            {uiLanguage === "vi" ? "KẾT NỐI YOUTUBE" : "CONNECT YOUTUBE"}
+          </button>
+        )}
         <div className="w-full text-center pb-2 text-white/30 text-xs font-semibold uppercase tracking-widest border-b border-white/10 mb-2">
           {uiLanguage === "vi" ? "DANH MỤC" : "CATEGORIES"}
         </div>

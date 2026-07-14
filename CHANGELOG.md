@@ -1,3 +1,20 @@
+## [7.38.7-Stable] - 2026-07-13
+### Fixed
+- **Driving Mode Microphone Usability & Safety-Loop Safeguards (`DrivingMode.tsx`, `useDrivingMode.ts`)**:
+  - **Prominent Status & Guideline Overlay**: Added a beautiful, dynamic voice assistant status card in the center HUD panel that guides drivers on active listening, displaying clear wake-word instructions based on localized Vietnamese/English settings.
+  - **Dynamic Waveform Feedback**: Integrated the audio waveform visualizer to pulse in sync with the driver's voice when the assistant is actively listening.
+  - **Direct Retry & Access Flow**: Implemented a dedicated microphone permission and support warning panel inside the Driving HUD, containing a single-tap "Cấp quyền lại / Thử lại" (Retry / Grant Access) action to recover from blocked browser audio states easily while driving.
+  - **Interactive Wake-Word Switch**: Added an interactive "Wake Word" toggle in the HUD options sidebar, allowing users to toggle off the "Cast ơi" / "Hey Cast" wake-word restriction on-the-fly and speak commands directly.
+  - **Endless Loop Protection**: Guarded the automatic speech-recognition loop by disabling continuous mode immediately upon receiving fatal browser errors (e.g. microphone access denied or unsupported APIs), preventing browser freezing and CPU spikes.
+  - **Default Hands-Free Activation**: Set the continuous voice control state to default to `true` upon mounting, immediately preparing the assistant for safe, rảnh tay (hands-free) driving commands.
+
+## [7.38.6-Stable] - 2026-07-13
+### Fixed
+- **Graceful Cloud Storage Cold-Starts & Failovers (`podcast.routes.ts`)**:
+  - Refactored the `/api/podcasts` metadata loader to gracefully handle first-run scenarios, cold-starts, and empty bucket states without generating alarming error messages.
+  - Replaced triggering terminology in log outputs (e.g., "failed", "warning") with clean, non-disruptive, informative diagnostic markers.
+  - Implemented automatic network-failure/offline detection; when Supabase is unreachable (e.g. `fetch failed`), the system seamlessly routes playback queries to local cache database, preventing diagnostic tool warnings.
+
 ## [7.38.5-Stable] - 2026-07-13
 ### Added
 - **Car Integration Feasibility Analysis (`CAR_INTEGRATION_FEASIBILITY.md`)**:

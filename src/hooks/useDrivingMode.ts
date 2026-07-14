@@ -72,7 +72,7 @@ export function useDrivingMode(
 ): UseDrivingModeReturn {
   const { onCommand, playFeedbackSound, vibrate } = options;
   const { preferences, updateDrivingMode } = useUserPreferences();
-  const [isContinuous, setIsContinuous] = useState(false);
+  const [isContinuous, setIsContinuous] = useState(true);
   const [transcript, setTranscript] = useState("");
   const [commandFeedback, setCommandFeedback] = useState("");
   const [micError, setMicError] = useState("");
@@ -165,6 +165,12 @@ export function useDrivingMode(
         return;
       }
       setMicError(message);
+      
+      // If it's a fatal error like permission denied, we must stop continuous listening to prevent infinite loops
+      if (detail === "not-allowed" || detail === "service-not-allowed" || type === "unsupported") {
+        setIsContinuous(false);
+      }
+      
       setToastState({
         message: uiLanguage === "vi" ? `Lỗi trợ lý giọng nói: ${message}` : `Voice assistant error: ${message}`,
         show: true

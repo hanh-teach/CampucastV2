@@ -194,6 +194,13 @@ export default function App() {
   const [showRssNotification, setShowRssNotification] = useState(false);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
 
+  // Sync uiLanguage state with preferences.language
+  useEffect(() => {
+    if (preferences.language && (preferences.language === "vi" || preferences.language === "en")) {
+      setUiLanguage(preferences.language);
+    }
+  }, [preferences.language]);
+
   // --- 1. Cloud Synchronization (useSync) ---
   const { user, syncStatus, isOnline: syncOnline, triggerSync, abortSync } = useSync();
 
@@ -1214,7 +1221,6 @@ const handleApplyPreset = (index: number) => {
       </footer>
 
       <AssistantChat 
-        uiLanguage={uiLanguage}
         activeTab={activeTab}
         step={step}
         isOpen={isAssistantOpen}
@@ -1239,6 +1245,7 @@ const handleApplyPreset = (index: number) => {
             alert(uiLanguage === "vi" ? "🧹 Đã xóa sạch bộ nhớ đệm và lịch sử hội thoại thành công!" : "🧹 Cleared cache and history successfully!");
           }
         }}
+        preferences={preferences}
       />
     </div>
 
