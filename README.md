@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # CommuteCast
 
 Evidence-driven personalized daily news briefings with progressive execution feedback and production observability.
@@ -44,3 +45,6 @@ or specifically:
 ```bash
 npx vitest run
 ```
+=======
+# CampucastV2
+>>>>>>> 440b6ec5b0fcee8b7e9ddd1867aa020cd9673c36
