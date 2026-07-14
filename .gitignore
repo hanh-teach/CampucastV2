@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# Local media, caching and local published episodes database
+local_podcasts/
+published-podcasts.json
+

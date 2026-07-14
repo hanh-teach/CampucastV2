@@ -1,0 +1,10 @@
+{
+  "name": "CommuteCast",
+  "description": "Evidence-driven personalized daily news briefings with progressive execution feedback and production observability.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
