@@ -44,6 +44,7 @@ const PORT = 3000;
 const allowedOrigins = new Set([
   process.env.APP_URL?.trim(),
   "https://campucastv.onrender.com",
+  "https://campucastv2.onrender.com",
   "https://campucastv1.up.railway.app",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
