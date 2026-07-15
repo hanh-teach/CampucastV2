@@ -27,7 +27,8 @@ import {
   callGeminiWithRotation,
   generateWithGroq,
   parseGeminiError,
-  fetchWithTimeout
+  fetchWithTimeout,
+  SUPABASE_BUCKET_NAME
 } from "./src/server/shared";
 // import { GoogleGenAI, Type, LiveServerMessage, Modality } from "@google/genai";
 
@@ -133,7 +134,7 @@ async function loadSharedBriefingsFromSupabaseAsync(): Promise<any[]> {
     let downloadErr: any = null;
 
     try {
-      const { data, error } = await supabase.storage.from("podcast-audio").download("metadata/shared-briefings.json");
+      const { data, error } = await supabase.storage.from(SUPABASE_BUCKET_NAME).download("metadata/shared-briefings.json");
       if (!error && data) {
         rawData = data;
       } else {
@@ -169,7 +170,7 @@ async function saveSharedBriefingsToSupabaseAsync(briefings: any[]) {
     console.log("[Share - Supabase] Syncing shared briefings to Supabase Cloud Storage...");
     const fileBuffer = Buffer.from(JSON.stringify(briefings, null, 2));
 
-    const uploadResult = await supabase.storage.from("podcast-audio").upload("metadata/shared-briefings.json", fileBuffer, {
+    const uploadResult = await supabase.storage.from(SUPABASE_BUCKET_NAME).upload("metadata/shared-briefings.json", fileBuffer, {
       contentType: "application/json",
       upsert: true
     });

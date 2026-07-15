@@ -34,9 +34,11 @@ export function getGcsClient(): Storage | null {
   }
 }
 
+export const SUPABASE_BUCKET_NAME = process.env.SUPABASE_BUCKET_NAME || "CampucasV2_audio";
+
 export function getSupabaseClient() {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_ANON_KEY;
+  const supabaseUrl = process.env.SUPABASE_URL || "https://lbmylmefqlirdfawbwpo.supabase.co";
+  const supabaseKey = process.env.SUPABASE_ANON_KEY || "sb_publishable_jKRkcYr1pPd1MBzcXvbH1w_5__H5N-6";
   if (!supabaseUrl || !supabaseKey) return null;
   return createClient(supabaseUrl, supabaseKey);
 }

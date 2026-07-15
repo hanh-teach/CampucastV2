@@ -7,7 +7,8 @@ import {
   LOCAL_AUDIO_DIR, 
   getGcsClient, 
   getSupabaseClient, 
-  encodeWavHeaderNode 
+  encodeWavHeaderNode,
+  SUPABASE_BUCKET_NAME
 } from "../shared";
 
 const router = express.Router();
@@ -37,7 +38,7 @@ async function loadPublishedEpisodesFromSupabaseAsync(): Promise<PublishedEpisod
     let loadedFilename = "";
 
     try {
-      const { data, error } = await supabase.storage.from("podcast-audio").list("audio");
+      const { data, error } = await supabase.storage.from(SUPABASE_BUCKET_NAME).list("audio");
       if (!error && data && data.length > 0) {
         const jsonFiles = data.filter((f: any) => f.name.startsWith("metadata_v_") && f.name.endsWith(".json"));
         if (jsonFiles.length > 0) {
@@ -45,7 +46,7 @@ async function loadPublishedEpisodesFromSupabaseAsync(): Promise<PublishedEpisod
           const latestFile = jsonFiles[0];
           loadedFilename = `audio/${latestFile.name}`;
           console.log(`[Podcast - Supabase] Found latest versioned metadata file: ${loadedFilename}`);
-          const { data: fileData, error: downloadError } = await supabase.storage.from("podcast-audio").download(loadedFilename);
+          const { data: fileData, error: downloadError } = await supabase.storage.from(SUPABASE_BUCKET_NAME).download(loadedFilename);
           if (!downloadError && fileData) {
             rawData = fileData;
           } else if (downloadError) {
@@ -60,7 +61,7 @@ async function loadPublishedEpisodesFromSupabaseAsync(): Promise<PublishedEpisod
     if (!rawData) {
       console.log("[Podcast - Supabase] Versioned metadata not found. Trying primary static metadata/published-podcasts.json path...");
       try {
-        const { data, error } = await supabase.storage.from("podcast-audio").download("metadata/published-podcasts.json");
+        const { data, error } = await supabase.storage.from(SUPABASE_BUCKET_NAME).download("metadata/published-podcasts.json");
         if (!error && data) {
           rawData = data;
           loadedFilename = "metadata/published-podcasts.json";
@@ -75,7 +76,7 @@ async function loadPublishedEpisodesFromSupabaseAsync(): Promise<PublishedEpisod
     if (!rawData) {
       console.log("[Podcast - Supabase] Static primary path not found. Checking fallback static audio/published-podcasts.json path...");
       try {
-        const { data, error } = await supabase.storage.from("podcast-audio").download("audio/published-podcasts.json");
+        const { data, error } = await supabase.storage.from(SUPABASE_BUCKET_NAME).download("audio/published-podcasts.json");
         if (!error && data) {
           rawData = data;
           loadedFilename = "audio/published-podcasts.json";
@@ -131,35 +132,35 @@ async function savePublishedEpisodesToSupabaseAsync(episodes: PublishedEpisode[]
     const newFilename = `audio/metadata_v_${timestamp}.json`;
     console.log(`[Podcast - Supabase] Strategy 1: Uploading brand new versioned metadata: ${newFilename}`);
 
-    let uploadResult = await supabase.storage.from("podcast-audio").upload(newFilename, fileBuffer, {
+    let uploadResult = await supabase.storage.from(SUPABASE_BUCKET_NAME).upload(newFilename, fileBuffer, {
       contentType: "application/json",
       upsert: false,
     });
 
     if (uploadResult.error) {
       console.warn(`[Podcast - Supabase] Strategy 1 (Versioned Upload) failed: ${uploadResult.error.message}. Trying standard static paths...`);
-      uploadResult = await supabase.storage.from("podcast-audio").upload("metadata/published-podcasts.json", fileBuffer, {
+      uploadResult = await supabase.storage.from(SUPABASE_BUCKET_NAME).upload("metadata/published-podcasts.json", fileBuffer, {
         contentType: "application/json",
         upsert: true,
       });
       if (uploadResult.error) {
         console.log("[Podcast - Supabase] metadata/ upload with upsert failed. Attempting remove then insert...");
-        try { await supabase.storage.from("podcast-audio").remove(["metadata/published-podcasts.json"]); } catch (re) { }
-        uploadResult = await supabase.storage.from("podcast-audio").upload("metadata/published-podcasts.json", fileBuffer, {
+        try { await supabase.storage.from(SUPABASE_BUCKET_NAME).remove(["metadata/published-podcasts.json"]); } catch (re) { }
+        uploadResult = await supabase.storage.from(SUPABASE_BUCKET_NAME).upload("metadata/published-podcasts.json", fileBuffer, {
           contentType: "application/json",
           upsert: false,
         });
       }
       if (uploadResult.error) {
         console.warn("[Podcast - Supabase] Primary path metadata/ failed (RLS folder check). Trying audio/ folder fallback...");
-        let fallbackResult = await supabase.storage.from("podcast-audio").upload("audio/published-podcasts.json", fileBuffer, {
+        let fallbackResult = await supabase.storage.from(SUPABASE_BUCKET_NAME).upload("audio/published-podcasts.json", fileBuffer, {
           contentType: "application/json",
           upsert: true,
         });
         if (fallbackResult.error) {
           console.log("[Podcast - Supabase] audio/ fallback upload with upsert failed. Attempting remove then insert...");
-          try { await supabase.storage.from("podcast-audio").remove(["audio/published-podcasts.json"]); } catch (re) { }
-          fallbackResult = await supabase.storage.from("podcast-audio").upload("audio/published-podcasts.json", fileBuffer, {
+          try { await supabase.storage.from(SUPABASE_BUCKET_NAME).remove(["audio/published-podcasts.json"]); } catch (re) { }
+          fallbackResult = await supabase.storage.from(SUPABASE_BUCKET_NAME).upload("audio/published-podcasts.json", fileBuffer, {
             contentType: "application/json",
             upsert: false,
           });
@@ -175,14 +176,14 @@ async function savePublishedEpisodesToSupabaseAsync(episodes: PublishedEpisode[]
     } else {
       console.log(`[Podcast - Supabase] Metadata synchronized to Cloud Storage successfully via versioned path: ${newFilename}`);
       try {
-        const { data } = await supabase.storage.from("podcast-audio").list("audio");
+        const { data } = await supabase.storage.from(SUPABASE_BUCKET_NAME).list("audio");
         if (data) {
           const oldFiles = data
             .filter((f: any) => f.name.startsWith("metadata_v_") && f.name.endsWith(".json"))
             .map((f: any) => `audio/${f.name}`)
             .filter((name: string) => name !== newFilename);
           if (oldFiles.length > 0) {
-            supabase.storage.from("podcast-audio").remove(oldFiles).catch(() => { });
+            supabase.storage.from(SUPABASE_BUCKET_NAME).remove(oldFiles).catch(() => { });
           }
         }
       } catch (e) { /* ignore */ }
@@ -315,9 +316,9 @@ async function uploadAudioToSupabase(audioBuffer: Buffer, fileName: string, cont
 
   const fileExt = contentType === "audio/wav" ? "wav" : "mp3";
   const uniqueFileName = `audio/${uuidv4()}-${fileName}.${fileExt}`;
-  console.log(`[Supabase] Uploading audio binary to bucket "podcast-audio" (Type: ${contentType}): ${uniqueFileName}`);
+  console.log(`[Supabase] Uploading audio binary to bucket "${SUPABASE_BUCKET_NAME}" (Type: ${contentType}): ${uniqueFileName}`);
 
-  const { data, error } = await supabase.storage.from("podcast-audio").upload(uniqueFileName, audioBuffer, {
+  const { data, error } = await supabase.storage.from(SUPABASE_BUCKET_NAME).upload(uniqueFileName, audioBuffer, {
     contentType: contentType,
     cacheControl: "3600",
     upsert: false
@@ -328,7 +329,7 @@ async function uploadAudioToSupabase(audioBuffer: Buffer, fileName: string, cont
     throw new Error(`Upload failed: ${error.message}`);
   }
 
-  const { data: publicUrlData } = supabase.storage.from("podcast-audio").getPublicUrl(uniqueFileName);
+  const { data: publicUrlData } = supabase.storage.from(SUPABASE_BUCKET_NAME).getPublicUrl(uniqueFileName);
   if (!publicUrlData || !publicUrlData.publicUrl) {
     throw new Error("Failed to capture public URL from Supabase Storage.");
   }
@@ -563,21 +564,29 @@ router.delete("/podcast/episodes/:id", async (req, res): Promise<any> => {
       if (fs.existsSync(localPath)) {
         try { fs.unlinkSync(localPath); } catch (fErr) { console.error("Error deleting local file:", fErr); }
       }
-    } else if (targetEpisode.audioUrl.includes("supabase.co") || targetEpisode.audioUrl.includes("podcast-audio")) {
+    } else if (targetEpisode.audioUrl.includes("supabase.co") || targetEpisode.audioUrl.includes(SUPABASE_BUCKET_NAME) || targetEpisode.audioUrl.includes("podcast-audio")) {
       const supabase = getSupabaseClient();
       if (supabase) {
         try {
           console.log(`[Podcast - Supabase] Attempting file removal from storage bucket: audio/${filename}`);
           let storagePath = `audio/${filename}`;
-          if (targetEpisode.audioUrl.includes("/podcast-audio/")) {
-            const splitKey = "/podcast-audio/";
+          const splitKey = targetEpisode.audioUrl.includes(`/${SUPABASE_BUCKET_NAME}/`) 
+            ? `/${SUPABASE_BUCKET_NAME}/` 
+            : "/podcast-audio/";
+          if (targetEpisode.audioUrl.includes(splitKey)) {
             const remaining = targetEpisode.audioUrl.substring(targetEpisode.audioUrl.indexOf(splitKey) + splitKey.length);
             if (remaining) {
               storagePath = decodeURIComponent(remaining);
             }
           }
-          const { error } = await supabase.storage.from("podcast-audio").remove([storagePath]);
-          if (error) console.warn("[Supabase] Delete warning:", error.message || error);
+          const { error } = await supabase.storage.from(SUPABASE_BUCKET_NAME).remove([storagePath]);
+          if (error) {
+            // Try fallback old bucket if it fails
+            if (SUPABASE_BUCKET_NAME !== "podcast-audio") {
+              await supabase.storage.from("podcast-audio").remove([storagePath]).catch(() => {});
+            }
+            console.warn("[Supabase] Delete warning:", error.message || error);
+          }
           else console.log(`[Podcast - Supabase] Successfully removed file from buckets: ${storagePath}`);
         } catch (sbDelErr) {
           console.error("Error deleting file from Supabase storage:", sbDelErr);

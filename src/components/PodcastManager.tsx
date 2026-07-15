@@ -71,12 +71,12 @@ export default function PodcastManager({
     guideTitle: uiLanguage === "vi" ? "Hướng dẫn cấu hình Supabase Cloud" : "Supabase Cloud Integration Guide",
     guideStep1: uiLanguage === "vi" ? "1. Tạo Storage Bucket" : "1. Create Storage Bucket",
     guideStep1Body: uiLanguage === "vi" 
-      ? "Đăng nhập vào bảng điều khiển Supabase, điều hướng đến Storage, tạo mới một bucket có tên chính xác là \"podcast-audio\". Hãy bật tùy chọn Public Bucket."
-      : "Log in to your Supabase dashboard, go to Storage, and create a new bucket named exactly \"podcast-audio\". Ensure \"Public Bucket\" is checked.",
+      ? "Đăng nhập vào bảng điều khiển Supabase, điều hướng đến Storage, tạo mới một bucket có tên chính xác là \"CampucasV2_audio\". Hãy bật tùy chọn Public Bucket."
+      : "Log in to your Supabase dashboard, go to Storage, and create a new bucket named exactly \"CampucasV2_audio\". Ensure \"Public Bucket\" is checked.",
     guideStep2: uiLanguage === "vi" ? "2. Cài đặt RLS Policy (Chính sách truy cập)" : "2. Configure RLS Access Policies",
     guideStep2Body: uiLanguage === "vi"
-      ? "Trong cài đặt Bucket \"podcast-audio\" > Policies, thêm chính sách mới để cho phép mọi người (Public/Anon) có quyền SELECT (đọc) tệp âm thanh công khai và quyền INSERT (tải lên) tệp mới."
-      : "Within \"podcast-audio\" bucket settings > Policies, add new policies allowing Public/Anon clients SELECT (read) access for public audios and INSERT (upload) access for new files.",
+      ? "Trong cài đặt Bucket \"CampucasV2_audio\" > Policies, thêm chính sách mới để cho phép mọi người (Public/Anon) có quyền SELECT (đọc) tệp âm thanh công khai và quyền INSERT (tải lên) tệp mới."
+      : "Within \"CampucasV2_audio\" bucket settings > Policies, add new policies allowing Public/Anon clients SELECT (read) access for public audios and INSERT (upload) access for new files.",
     guideStep3: uiLanguage === "vi" ? "3. Điền cấu hình môi trường" : "3. Fill Environment Variables",
     guideStep3Body: uiLanguage === "vi"
       ? "Đảm bảo biến môi trường SUPABASE_URL và SUPABASE_ANON_KEY đã được định nghĩa trong Settings/Environment của bạn để hệ thống kết nối tự động."

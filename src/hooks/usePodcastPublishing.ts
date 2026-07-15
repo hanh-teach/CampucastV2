@@ -212,8 +212,8 @@ export function usePodcastPublishing({
         if (!silentSuccess) {
           if (data.storageType === "local") {
             const warnMsg = uiLanguage === "vi"
-              ? `⚠️ Đã xuất bản podcast thành công, nhưng hiện tại tệp đang được lưu tạm trên Máy chủ Local do lỗi tải lên Supabase Storage.\n\nChi tiết lỗi: ${data.supabaseError || "Không rõ"}\n\n👉 Vui lòng truy cập trang quản lý Supabase Storage và đảm bảo bạn đã tạo Bucket tên là "podcast-audio" ở chế độ Public và cấu hình RLS Policy cho phép INSERT/Upload công khai.`
-              : `⚠️ Podcast published successfully, but the audio file is hosted on the Local server backup due to a Supabase upload issue.\n\nError details: ${data.supabaseError || "Unknown"}\n\n👉 Please check that your "podcast-audio" Supabase Storage bucket is set to Public, and that you have enabled an Insert RLS Policy.`;
+              ? `⚠️ Đã xuất bản podcast thành công, nhưng hiện tại tệp đang được lưu tạm trên Máy chủ Local do lỗi tải lên Supabase Storage.\n\nChi tiết lỗi: ${data.supabaseError || "Không rõ"}\n\n👉 Vui lòng truy cập trang quản lý Supabase Storage và đảm bảo bạn đã tạo Bucket tên là "CampucasV2_audio" ở chế độ Public và cấu hình RLS Policy cho phép INSERT/Upload công khai.`
+              : `⚠️ Podcast published successfully, but the audio file is hosted on the Local server backup due to a Supabase upload issue.\n\nError details: ${data.supabaseError || "Unknown"}\n\n👉 Please check that your "CampucasV2_audio" Supabase Storage bucket is set to Public, and that you have enabled an Insert RLS Policy.`;
             alert(warnMsg);
           } else {
             alert(uiLanguage === "vi" ? "🎉 Xuất bản podcast thành công lên Supabase Storage!" : "🎉 Podcast episode published successfully to Supabase Storage!");
