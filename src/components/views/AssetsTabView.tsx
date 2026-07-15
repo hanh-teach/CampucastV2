@@ -243,7 +243,7 @@ export default function AssetsTabView({
     if (activeCategory === "archive" && loadPodcastEpisodes) {
       loadPodcastEpisodes();
     }
-  }, [activeCategory, loadPodcastEpisodes]);
+  }, [activeCategory]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

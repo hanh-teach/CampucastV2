@@ -32,7 +32,16 @@ export function usePodcastPublishing({
       try {
         const localEps = JSON.parse(localSavedRaw);
         if (Array.isArray(localEps)) {
-          localEps.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+          localEps.sort((a, b) => {
+            const pubDateA = a && a.pubDate ? a.pubDate : "";
+            const pubDateB = b && b.pubDate ? b.pubDate : "";
+            const dateA = pubDateA ? new Date(pubDateA).getTime() : NaN;
+            const dateB = pubDateB ? new Date(pubDateB).getTime() : NaN;
+            if (isNaN(dateA) || isNaN(dateB)) {
+              return pubDateB.localeCompare(pubDateA);
+            }
+            return dateB - dateA;
+          });
           setPodcastEpisodes(localEps);
           return;
         }
@@ -68,11 +77,13 @@ export function usePodcastPublishing({
 
           // Sort descending by date/pubDate
           merged.sort((a, b) => {
-            const dateA = new Date(a.pubDate).getTime();
-            const dateB = new Date(b.pubDate).getTime();
+            const pubDateA = a && a.pubDate ? a.pubDate : "";
+            const pubDateB = b && b.pubDate ? b.pubDate : "";
+            const dateA = pubDateA ? new Date(pubDateA).getTime() : NaN;
+            const dateB = pubDateB ? new Date(pubDateB).getTime() : NaN;
             // Fallback to lexicographical compare if date is invalid
             if (isNaN(dateA) || isNaN(dateB)) {
-              return b.pubDate.localeCompare(a.pubDate);
+              return pubDateB.localeCompare(pubDateA);
             }
             return dateB - dateA;
           });
