@@ -952,6 +952,7 @@ app.get("/api/db-config", (req, res) => {
 
   const DEFAULT_SUPABASE_URLS = [
     "https://your-project.supabase.co",
+    "https://your-project-ref.supabase.co",
     "https://example.supabase.co",
     ""
   ];
@@ -960,7 +961,7 @@ app.get("/api/db-config", (req, res) => {
     ""
   ];
 
-  const isDefaultUrl = DEFAULT_SUPABASE_URLS.includes(rawUrl);
+  const isDefaultUrl = DEFAULT_SUPABASE_URLS.includes(rawUrl) || rawUrl.includes("your-project-ref");
   const isDefaultKey = DEFAULT_ANON_KEYS.includes(rawKey);
 
   const isObviouslyFake =

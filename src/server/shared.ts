@@ -37,9 +37,30 @@ export function getGcsClient(): Storage | null {
 export const SUPABASE_BUCKET_NAME = process.env.SUPABASE_BUCKET_NAME || "CampucasV2_audio";
 
 export function getSupabaseClient() {
-  const supabaseUrl = process.env.SUPABASE_URL || "https://lbmylmefqlirdfawbwpo.supabase.co";
-  const supabaseKey = process.env.SUPABASE_ANON_KEY || "sb_publishable_jKRkcYr1pPd1MBzcXvbH1w_5__H5N-6";
-  if (!supabaseUrl || !supabaseKey) return null;
+  let supabaseUrl = (process.env.SUPABASE_URL || "").trim();
+  let supabaseKey = (process.env.SUPABASE_ANON_KEY || "").trim();
+
+  const isInvalidUrl = 
+    !supabaseUrl || 
+    supabaseUrl.includes("your-project") || 
+    supabaseUrl.includes("your-project-ref") || 
+    supabaseUrl.includes("example.supabase.co") || 
+    supabaseUrl.includes("placeholder") || 
+    supabaseUrl.includes("dummy");
+
+  const isInvalidKey = 
+    !supabaseKey || 
+    supabaseKey.includes("your-anon-key") || 
+    supabaseKey.includes("placeholder") || 
+    supabaseKey.includes("dummy");
+
+  if (isInvalidUrl) {
+    supabaseUrl = "https://lbmylmefqlirdfawbwpo.supabase.co";
+  }
+  if (isInvalidKey) {
+    supabaseKey = "sb_publishable_jKRkcYr1pPd1MBzcXvbH1w_5__H5N-6";
+  }
+
   return createClient(supabaseUrl, supabaseKey);
 }
 

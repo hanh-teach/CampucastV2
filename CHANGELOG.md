@@ -5,6 +5,10 @@
   - Migrated backend storage handlers (`podcast.routes.ts` and `server.ts`) to synchronize and download metadata, published podcasts, and shared briefings through the unified bucket `"CampucasV2_audio"`.
   - Updated client-side synchronization and upload services (`syncService.ts`) to target `"CampucasV2_audio"` under clean folders (`audio-briefings/`), eliminating previous hardcoded split-bucket layouts.
   - Refined client-side setup guides and warning modals in `PodcastManager.tsx` and `usePodcastPublishing.ts` to guide the user on bucket setup matching the new `"CampucasV2_audio"` namespace.
+- **Robust Placeholder Filter for Supabase Client Initialization**:
+  - Fixed a critical initialization bug where dummy `SUPABASE_URL` values (e.g. `https://your-project-ref.supabase.co`) provided in the system context environment were mistakenly processed as valid user configurations, preventing the server and client from correctly falling back to the user's active database credentials.
+  - Updated `getSupabaseClient` on the backend and `/api/db-config` on the server to explicitly filter out any system dummy placeholder URLs (including `"your-project-ref"`) and fallback cleanly to the correct active project URL (`https://lbmylmefqlirdfawbwpo.supabase.co`).
+
 
 ## [7.39.1-Stable] - 2026-07-15
 ### Fixed
