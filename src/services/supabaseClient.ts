@@ -139,28 +139,24 @@ export async function getSupabaseClientAsync(forceRetry = false): Promise<Supaba
           initPromise = null;
           return null;
         }
-
-        // Thành công
-        clientInstance = createClient(url, anonKey, {
-          auth: {
-            persistSession: true,
-            autoRefreshToken: true,
-            detectSessionInUrl: true,
-            storage: window.localStorage,
-          },
-        });
-
-        logger.info("[Supabase Client] Client initialized and health check verified successfully.");
-        cloudSyncStatus.setState("CONNECTED");
-        isMisconfigured = false;
-        return clientInstance;
       } catch (pingErr: any) {
-        logger.warn("[Supabase Client] Connection health check failed (host unreachable or timeout). Setting to OFFLINE.", pingErr);
-        cloudSyncStatus.setState("OFFLINE");
-        initPromise = null;
-        // Không đánh dấu misconfigured vì có thể mạng tạm thời, nhưng sẽ retry sau RETRY_DELAY
-        return null;
+        logger.warn("[Supabase Client] Connection health check failed (host unreachable, CORS, or timeout). Proceeding with client initialization.", pingErr);
       }
+
+      // Khởi tạo client
+      clientInstance = createClient(url, anonKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          storage: window.localStorage,
+        },
+      });
+
+      logger.info("[Supabase Client] Client initialized successfully.");
+      cloudSyncStatus.setState("CONNECTED");
+      isMisconfigured = false;
+      return clientInstance;
     } catch (err: any) {
       logger.error("[Supabase Client] Failed to initialize Supabase client:", err);
       cloudSyncStatus.setState("LOCAL_ONLY");

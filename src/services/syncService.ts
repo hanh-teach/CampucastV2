@@ -248,126 +248,152 @@ export async function processSyncQueueAsync(signal?: AbortSignal): Promise<boole
   }
 
   // --- BƯỚC 2: THỰC THI CHUYỂN ĐỔI BATCH (REDUCE REQUESTS BY > 50%) ---
+  let overallSuccess = true;
   try {
     // 1. Xử lý lưu các bản tin (Briefings) - có upload file audio lên storage riêng
     if (briefingsToSave.size > 0) {
-      const sortedBriefings = Array.from(briefingsToSave.values());
-      const BATCH_SIZE = 5;
+      try {
+        const sortedBriefings = Array.from(briefingsToSave.values());
+        const BATCH_SIZE = 5;
 
-      for (let i = 0; i < sortedBriefings.length; i += BATCH_SIZE) {
-        if (signal?.aborted) throw new Error("AbortError");
-        
-        const batch = sortedBriefings.slice(i, i + BATCH_SIZE);
-        const rowsToUpsert = [];
-
-        for (const b of batch) {
+        for (let i = 0; i < sortedBriefings.length; i += BATCH_SIZE) {
           if (signal?.aborted) throw new Error("AbortError");
+          
+          const batch = sortedBriefings.slice(i, i + BATCH_SIZE);
+          const rowsToUpsert = [];
 
-          // Tách riêng tệp âm thanh nặng, tải lên Storage để lấy link URL rút gọn
-          let audioUrl: string | null = (b as any).audioUrl || null;
-          if (!audioUrl && b.audioChunks && b.audioChunks.length > 0 && !b.audioChunks[0]?.startsWith("http")) {
-            console.log(`[Sync] Uploading heavy base64 audio for briefing: ${b.id}`);
-            audioUrl = await uploadAudioToSupabaseStorage(b.id, b.audioChunks);
-            if (audioUrl) {
-              (b as any).audioUrl = audioUrl;
-              // Đồng bộ lại tệp audioUrl xuống IndexedDB cục bộ để giữ tệp sạch
-              await saveBriefing(b);
+          for (const b of batch) {
+            if (signal?.aborted) throw new Error("AbortError");
+
+            // Tách riêng tệp âm thanh nặng, tải lên Storage để lấy link URL rút gọn
+            let audioUrl: string | null = (b as any).audioUrl || null;
+            if (!audioUrl && b.audioChunks && b.audioChunks.length > 0 && !b.audioChunks[0]?.startsWith("http")) {
+              console.log(`[Sync] Uploading heavy base64 audio for briefing: ${b.id}`);
+              audioUrl = await uploadAudioToSupabaseStorage(b.id, b.audioChunks);
+              if (audioUrl) {
+                (b as any).audioUrl = audioUrl;
+                // Đồng bộ lại tệp audioUrl xuống IndexedDB cục bộ để giữ tệp sạch
+                await saveBriefing(b);
+              }
             }
+
+            rowsToUpsert.push({
+              id: b.id,
+              user_id: userId,
+              timestamp: b.timestamp,
+              preferences: b.preferences,
+              payload: b.payload,
+              audio_chunks: audioUrl ? [audioUrl] : [], // Chỉ lưu url nhẹ vào database
+              like_count: b.likeCount || 0,
+              share_count: b.shareCount || 0,
+              updated_at: new Date().toISOString()
+            });
           }
 
-          rowsToUpsert.push({
-            id: b.id,
-            user_id: userId,
-            timestamp: b.timestamp,
-            preferences: b.preferences,
-            payload: b.payload,
-            audio_chunks: audioUrl ? [audioUrl] : [], // Chỉ lưu url nhẹ vào database
-            like_count: b.likeCount || 0,
-            share_count: b.shareCount || 0,
-            updated_at: new Date().toISOString()
-          });
+          // Gọi 1 request duy nhất cho cả Batch upsert
+          console.log(`[Sync] Batch upserting ${rowsToUpsert.length} briefings metadata to Cloud...`);
+          const { error } = await supabase
+            .from("briefings")
+            .upsert(rowsToUpsert, { signal } as any);
+          
+          if (error) throw error;
         }
-
-        // Gọi 1 request duy nhất cho cả Batch upsert
-        console.log(`[Sync] Batch upserting ${rowsToUpsert.length} briefings metadata to Cloud...`);
-        const { error } = await supabase
-          .from("briefings")
-          .upsert(rowsToUpsert, { signal } as any);
-        
-        if (error) throw error;
+      } catch (err: any) {
+        console.error("[Sync] Error batch upserting briefings:", err);
+        overallSuccess = false;
       }
     }
 
     // 2. Xử lý xóa bản tin (Briefings)
     if (briefingsToDelete.size > 0) {
-      if (signal?.aborted) throw new Error("AbortError");
-      const idsToDelete = Array.from(briefingsToDelete);
-      console.log(`[Sync] Batch deleting ${idsToDelete.length} briefings from Cloud...`);
-      
-      const { error } = await supabase
-        .from("briefings")
-        .delete({ signal } as any)
-        .in("id", idsToDelete)
-        .eq("user_id", userId);
+      try {
+        if (signal?.aborted) throw new Error("AbortError");
+        const idsToDelete = Array.from(briefingsToDelete);
+        console.log(`[Sync] Batch deleting ${idsToDelete.length} briefings from Cloud...`);
+        
+        const { error } = await supabase
+          .from("briefings")
+          .delete({ signal } as any)
+          .in("id", idsToDelete)
+          .eq("user_id", userId);
 
-      if (error) throw error;
+        if (error) throw error;
+      } catch (err: any) {
+        console.error("[Sync] Error batch deleting briefings:", err);
+        overallSuccess = false;
+      }
     }
 
     // 3. Xử lý lưu lịch sử voice (Voice History)
     if (voiceHistoryClear) {
-      if (signal?.aborted) throw new Error("AbortError");
-      console.log("[Sync] Clearing all voice intelligence from Cloud...");
-      const { error } = await supabase
-        .from("voice_history")
-        .delete({ signal } as any)
-        .eq("user_id", userId);
-      if (error) throw error;
+      try {
+        if (signal?.aborted) throw new Error("AbortError");
+        console.log("[Sync] Clearing all voice intelligence from Cloud...");
+        const { error } = await supabase
+          .from("voice_history")
+          .delete({ signal } as any)
+          .eq("user_id", userId);
+        if (error) throw error;
+      } catch (err: any) {
+        console.error("[Sync] Error clearing voice history:", err);
+        overallSuccess = false;
+      }
     }
 
     if (voiceHistoryToSave.size > 0) {
-      const voiceItems = Array.from(voiceHistoryToSave.values());
-      const BATCH_SIZE = 10;
+      try {
+        const voiceItems = Array.from(voiceHistoryToSave.values());
+        const BATCH_SIZE = 10;
 
-      for (let i = 0; i < voiceItems.length; i += BATCH_SIZE) {
-        if (signal?.aborted) throw new Error("AbortError");
-        const batch = voiceItems.slice(i, i + BATCH_SIZE);
-        const rows = batch.map(v => ({
-          id: v.id,
-          user_id: userId,
-          query: v.query,
-          answer: v.answer,
-          language: v.language,
-          sources: v.sources || [],
-          timestamp: v.timestamp,
-          updated_at: new Date().toISOString()
-        }));
+        for (let i = 0; i < voiceItems.length; i += BATCH_SIZE) {
+          if (signal?.aborted) throw new Error("AbortError");
+          const batch = voiceItems.slice(i, i + BATCH_SIZE);
+          const rows = batch.map(v => ({
+            id: v.id,
+            user_id: userId,
+            query: v.query,
+            answer: v.answer,
+            language: v.language,
+            sources: v.sources || [],
+            timestamp: v.timestamp
+            // Bỏ updated_at vì cột không tồn tại trên bảng voice_history
+          }));
 
-        console.log(`[Sync] Batch upserting ${rows.length} voice intelligence items to Cloud...`);
-        const { error } = await supabase
-          .from("voice_history")
-          .upsert(rows, { signal } as any);
-        if (error) throw error;
+          console.log(`[Sync] Batch upserting ${rows.length} voice intelligence items to Cloud (no updated_at)...`);
+          const { error } = await supabase
+            .from("voice_history")
+            .upsert(rows, { signal } as any);
+          if (error) throw error;
+        }
+      } catch (err: any) {
+        console.error("[Sync] Error batch upserting voice history:", err);
+        overallSuccess = false;
       }
     }
 
     // 4. Xử lý lưu cấu hình (Preferences)
     if (latestPreferences) {
-      if (signal?.aborted) throw new Error("AbortError");
-      console.log("[Sync] Syncing latest user preferences to Cloud...");
-      const { error } = await supabase
-        .from("user_preferences")
-        .upsert({
-          user_id: userId,
-          preferences: latestPreferences,
-          updated_at: new Date().toISOString()
-        }, { signal } as any);
-      if (error) throw error;
+      try {
+        if (signal?.aborted) throw new Error("AbortError");
+        console.log("[Sync] Syncing latest user preferences to Cloud...");
+        const { error } = await supabase
+          .from("user_preferences")
+          .upsert({
+            user_id: userId,
+            preferences: latestPreferences,
+            updated_at: new Date().toISOString()
+          }, { signal } as any);
+        if (error) throw error;
+      } catch (err: any) {
+        console.error("[Sync] Error syncing user preferences:", err);
+        overallSuccess = false;
+      }
     }
 
-    // Tất cả xử lý batch đã thành công, xóa sạch hàng đợi đồng bộ cục bộ
+    // Tất cả xử lý batch đã hoàn tất, xóa sạch hàng đợi đồng bộ cục bộ để tránh nghẽn
     await clearSyncQueue();
-    console.log("[Sync Queue] Batch processing completed successfully. Queue cleared!");
-    return true;
+    console.log("[Sync Queue] Batch processing cycle completed. Queue cleared!");
+    return overallSuccess;
 
   } catch (err: any) {
     if (err.message === "AbortError" || signal?.aborted) {
@@ -430,97 +456,109 @@ export async function performFullSyncAsync(): Promise<boolean> {
     const currentSyncTime = new Date().toISOString();
 
     // 1. Sync UserPreferences
-    if (signal.aborted) throw new Error('AbortError');
-    const { data: prefData, error: prefErr } = await supabase
-      .from("user_preferences")
-      .select("preferences, updated_at", { signal } as any)
-      .eq("user_id", userId)
-      .maybeSingle();
+    try {
+      if (signal.aborted) throw new Error('AbortError');
+      const { data: prefData, error: prefErr } = await supabase
+        .from("user_preferences")
+        .select("preferences, updated_at", { signal } as any)
+        .eq("user_id", userId)
+        .maybeSingle();
 
-    if (signal.aborted) throw new Error('AbortError');
-    if (prefErr) console.warn("[Sync] Error loading cloud user preferences:", prefErr);
-
-    const localPrefStr = localStorage.getItem("commutecast_user_preferences");
-    const localPref = localPrefStr ? JSON.parse(localPrefStr) : null;
-
-    if (localPref && prefData) {
-      // Last-Write-Wins (LWW)
-      const cloudUpdated = prefData.updated_at ? new Date(prefData.updated_at) : new Date(0);
-      const localUpdated = lastSyncAt ? new Date(lastSyncAt) : new Date(0);
-      
-      if (cloudUpdated.getTime() > localUpdated.getTime()) {
-        localStorage.setItem("commutecast_user_preferences", JSON.stringify(prefData.preferences));
+      if (signal.aborted) throw new Error('AbortError');
+      if (prefErr) {
+        console.warn("[Sync] Error loading cloud user preferences:", prefErr);
       } else {
-        await supabase.from("user_preferences").upsert({
-          user_id: userId,
-          preferences: localPref,
-          updated_at: new Date().toISOString()
-        }, { signal } as any);
+        const localPrefStr = localStorage.getItem("commutecast_user_preferences");
+        const localPref = localPrefStr ? JSON.parse(localPrefStr) : null;
+
+        if (localPref && prefData) {
+          // Last-Write-Wins (LWW)
+          const cloudUpdated = prefData.updated_at ? new Date(prefData.updated_at) : new Date(0);
+          const localUpdated = lastSyncAt ? new Date(lastSyncAt) : new Date(0);
+          
+          if (cloudUpdated.getTime() > localUpdated.getTime()) {
+            localStorage.setItem("commutecast_user_preferences", JSON.stringify(prefData.preferences));
+          } else {
+            await supabase.from("user_preferences").upsert({
+              user_id: userId,
+              preferences: localPref,
+              updated_at: new Date().toISOString()
+            }, { signal } as any);
+          }
+        } else if (localPref && !prefData) {
+          await supabase.from("user_preferences").upsert({
+            user_id: userId,
+            preferences: localPref,
+            updated_at: new Date().toISOString()
+          }, { signal } as any);
+        } else if (!localPref && prefData) {
+          localStorage.setItem("commutecast_user_preferences", JSON.stringify(prefData.preferences));
+        }
       }
-    } else if (localPref && !prefData) {
-      await supabase.from("user_preferences").upsert({
-        user_id: userId,
-        preferences: localPref,
-        updated_at: new Date().toISOString()
-      }, { signal } as any);
-    } else if (!localPref && prefData) {
-      localStorage.setItem("commutecast_user_preferences", JSON.stringify(prefData.preferences));
+    } catch (prefErr: any) {
+      console.error("[Sync] Preferences sync encountered a failure:", prefErr);
     }
 
     // 2. Sync VoiceHistory (Delta Sync)
-    if (signal.aborted) throw new Error('AbortError');
-    let voiceQuery = supabase.from("voice_history").select("*", { signal } as any).eq("user_id", userId);
-    
-    // Áp dụng Delta Sync: chỉ tải các bản ghi thay đổi từ sau mốc lastSyncAt
-    if (lastSyncAt) {
-      voiceQuery = voiceQuery.gt("updated_at", lastSyncAt);
-    }
-    const { data: cloudVoice, error: voiceErr } = await voiceQuery;
+    try {
+      if (signal.aborted) throw new Error('AbortError');
+      let voiceQuery = supabase.from("voice_history").select("*", { signal } as any).eq("user_id", userId);
+      
+      // Áp dụng Delta Sync: chỉ tải các bản ghi thay đổi từ sau mốc lastSyncAt bằng cột timestamp
+      if (lastSyncAt) {
+        voiceQuery = voiceQuery.gt("timestamp", lastSyncAt);
+      }
+      const { data: cloudVoice, error: voiceErr } = await voiceQuery;
 
-    if (signal.aborted) throw new Error('AbortError');
-    if (voiceErr) console.warn("[Sync] Error loading cloud voice intelligence:", voiceErr);
+      if (signal.aborted) throw new Error('AbortError');
+      if (voiceErr) {
+        console.warn("[Sync] Error loading cloud voice intelligence:", voiceErr);
+      } else {
+        const localVoice = await getVoiceHistory();
 
-    const localVoice = await getVoiceHistory();
-
-    if (cloudVoice && cloudVoice.length > 0) {
-      for (const item of cloudVoice) {
-        if (signal.aborted) throw new Error('AbortError');
-        const existsLocally = localVoice.some(lv => lv.id === item.id);
-        if (!existsLocally) {
-          await saveVoiceHistory({
-            id: item.id,
-            timestamp: item.timestamp,
-            query: item.query,
-            answer: item.answer,
-            language: item.language,
-            sources: item.sources
-          });
+        if (cloudVoice && cloudVoice.length > 0) {
+          for (const item of cloudVoice) {
+            if (signal.aborted) throw new Error('AbortError');
+            const existsLocally = localVoice.some(lv => lv.id === item.id);
+            if (!existsLocally) {
+              await saveVoiceHistory({
+                id: item.id,
+                timestamp: item.timestamp,
+                query: item.query,
+                answer: item.answer,
+                language: item.language,
+                sources: item.sources
+              });
+            }
+          }
+        }
+        
+        // Upload local-only voice items
+        if (localVoice.length > 0) {
+          for (const item of localVoice) {
+            if (signal.aborted) throw new Error('AbortError');
+            const existsOnCloud = cloudVoice?.some(cv => cv.id === item.id);
+            if (!existsOnCloud) {
+              await supabase.from("voice_history").upsert({
+                id: item.id,
+                user_id: userId,
+                query: item.query,
+                answer: item.answer,
+                language: item.language,
+                sources: item.sources || [],
+                timestamp: item.timestamp
+                // Bỏ updated_at vì cột không tồn tại trên bảng voice_history
+              }, { signal } as any);
+            }
+          }
         }
       }
-    }
-    
-    // Upload local-only voice items
-    if (localVoice.length > 0) {
-      for (const item of localVoice) {
-        if (signal.aborted) throw new Error('AbortError');
-        const existsOnCloud = cloudVoice?.some(cv => cv.id === item.id);
-        if (!existsOnCloud) {
-          await supabase.from("voice_history").upsert({
-            id: item.id,
-            user_id: userId,
-            query: item.query,
-            answer: item.answer,
-            language: item.language,
-            sources: item.sources || [],
-            timestamp: item.timestamp,
-            updated_at: new Date().toISOString()
-          }, { signal } as any);
-        }
-      }
+    } catch (voiceErr: any) {
+      console.error("[Sync] Voice history sync encountered a failure:", voiceErr);
     }
 
     // 3. Sync Briefings (Two-Way Delta Sync với Conflict Resolution LWW)
-    if (signal.aborted) throw new Error('AbortError');
+    try {
     let briefingsQuery = supabase.from("briefings").select("*", { signal } as any).eq("user_id", userId);
     
     // Áp dụng Delta Sync cho Briefings
@@ -652,6 +690,9 @@ export async function performFullSyncAsync(): Promise<boolean> {
           }, { signal } as any);
         }
       }
+    }
+    } catch (briefErr: any) {
+      console.error("[Sync] Briefings delta sync encountered a failure:", briefErr);
     }
 
     // Ghi lại thời điểm đồng bộ thành công của thiết bị này

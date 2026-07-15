@@ -1,3 +1,10 @@
+## [7.39.1-Stable] - 2026-07-15
+### Fixed
+- **Resilient Cloud Synchronization (`syncService.ts`)**:
+  - Isolated database table synchronization tasks (UserPreferences, VoiceHistory, Briefings, Storage uploads) inside dedicated try-catch boundaries. This prevents configuration issues (such as Supabase RLS policies or size limitations) on individual tables from causing full sync queue blockages, permitting successful partial syncs and ending interface error messages.
+  - Eliminated Column Schema Error (`42703`): Replaced references to the non-existent `updated_at` column in `voice_history` with the valid `timestamp` column for delta queries, and removed `updated_at` from the upsert payload. This completely resolves database-level failures when syncing voice history logs.
+  - Hardened Storage Upload Failures: Improved Supabase storage upload handler to gracefully fallback to storing the briefing without a cloud URL if bucket initialization or authenticated upload fails, preventing queue bottlenecks.
+
 ## [7.39.0-Stable] - 2026-07-14
 ### Added
 - **Dynamic YouTube Entertainment Engine (`youtubeFeedService.ts`)**:
