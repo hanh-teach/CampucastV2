@@ -8,54 +8,107 @@ export type Action =
 
 /**
  * Parses a voice command text into a structured Action.
- * TODO: Use the `lang` parameter to specialize regex if needed in the future.
- * Currently both languages share the same regex set for simplicity as in the original code.
  */
 export function parseVoiceCommand(text: string, lang: "vi" | "en"): Action {
   const normalizedText = text.toLowerCase().trim();
 
-  // Switch view check (High priority)
-  // TODO: These regexes overlap significantly (mở, vào, chuyển, sang are in both).
-  // Currently, the first one (youtube) always wins if any of these keywords are present.
-  if (/(mở|vào|chuyển|sang|giải trí|xem|youtube|entertainment)/i.test(normalizedText)) {
-    return { type: "SWITCH_VIEW", view: "youtube" };
-  }
-  if (/(mở|vào|chuyển|sang|bản tin|nghe tin|briefing|news)/i.test(normalizedText)) {
-    return { type: "SWITCH_VIEW", view: "briefing" };
+  if (!normalizedText) {
+    return { type: "UNRECOGNIZED", raw: text };
   }
 
-  const playRegex = /(phát|chạy|tiếp|nghe|mở|bật|vào|play|resume|go|continue|đọc|đọc tiếp|tiếp đi|mở giùm|mở hộ)/i;
-  const pauseRegex = /(tạm\s*dừng|dừng|ngừng|ngưng|tắt|thôi|pause|stop|halt|nghỉ|im|im lặng|dừng lại|dừng giùm)/i;
-  const nextRegex = /(qua\s*bài|tiếp\s*theo|bài\s*khác|next|skip|bỏ\s*qua|tới\s*luôn|bài\s*mới|kế tiếp)/i;
-  const forwardRegex = /(tua\s*nhanh|tua\s*tới|forward|fast\s*forward|nhích\s*lên|tới\s*chút|tua\s*đi)/i;
-  // TODO: rewindRegex and exitRegex both contain "quay\s*về". Rewind wins due to priority.
-  const rewindRegex = /(tua\s*lại|lùi|quay\s*lại|rewind|back|lùi\s*lại|quay\s*về|hồi\s*nãy|nghe\s*lại)/i;
-  const exitRegex = /(thoát|đóng|quay\s*về|exit|close|quit|về\s*nhà|nghỉ\s*lái|tắt\s*hud|xong\s*rồi)/i;
-  const searchRegex = /(tìm\s*kiếm|search\s*for|mở\s*bài|tìm\s*bài)/i;
-
-  // Search check
-  // TODO: Commands like "mở bài..." will match the youtube view switch first.
-  if (searchRegex.test(normalizedText)) {
-    const query = normalizedText.replace(searchRegex, "").trim();
-    if (query) {
-      return { type: "SEARCH", query };
-    }
-  }
-
-  // Media and system commands
-  if (playRegex.test(normalizedText)) {
-    return { type: "PLAY" };
-  } else if (pauseRegex.test(normalizedText)) {
-    return { type: "PAUSE" };
-  } else if (nextRegex.test(normalizedText)) {
-    return { type: "NEXT" };
-  } else if (forwardRegex.test(normalizedText)) {
-    return { type: "FORWARD", seconds: 15 };
-  } else if (rewindRegex.test(normalizedText)) {
-    return { type: "REWIND", seconds: 15 };
-  } else if (exitRegex.test(normalizedText)) {
+  // 1. EXIT (High Priority)
+  const exitPhrases = [
+    "thoát", "đóng", "exit", "close", "quit", 
+    "về nhà", "nghỉ lái", "tắt hud", "xong rồi", 
+    "trang chủ", "quay về trang chủ", "quay lại trang chủ"
+  ];
+  if (exitPhrases.includes(normalizedText) || normalizedText === "về" || normalizedText === "quay về") {
     return { type: "EXIT" };
   }
 
+  // 2. NEXT
+  const nextPhrases = [
+    "qua bài", "tiếp theo", "bài khác", "next", "skip", 
+    "bỏ qua", "tới luôn", "bài mới", "kế tiếp"
+  ];
+  if (nextPhrases.includes(normalizedText)) {
+    return { type: "NEXT" };
+  }
+
+  // 3. FORWARD
+  const forwardPhrases = [
+    "tua nhanh", "tua tới", "forward", "fast forward", 
+    "nhích lên", "tới chút", "tua đi"
+  ];
+  if (forwardPhrases.includes(normalizedText)) {
+    return { type: "FORWARD", seconds: 15 };
+  }
+
+  // 4. REWIND
+  const rewindPhrases = [
+    "tua lại", "lùi", "quay lại", "rewind", "back", 
+    "lùi lại", "hồi nãy", "nghe lại"
+  ];
+  if (rewindPhrases.includes(normalizedText)) {
+    return { type: "REWIND", seconds: 15 };
+  }
+
+  // 5. SWITCH_VIEW - BRIEFING (NEWS)
+  const briefingPhrases = ["bản tin", "nghe tin", "briefing", "news", "tin tức", "mở tin", "mở news"];
+  const matchesBriefing = briefingPhrases.some(phrase => {
+    if (normalizedText === phrase) return true;
+    const regex = new RegExp(`\\b(mở|vào|chuyển|sang|nghe)\\s+${phrase}\\b`, "i");
+    return regex.test(normalizedText);
+  });
+  if (matchesBriefing) {
+    return { type: "SWITCH_VIEW", view: "briefing" };
+  }
+
+  // 6. SWITCH_VIEW - YOUTUBE
+  const youtubePhrases = ["youtube", "entertainment", "giải trí", "xem youtube", "mở youtube", "chuyển giải trí"];
+  const matchesYoutube = youtubePhrases.some(phrase => {
+    if (normalizedText === phrase) return true;
+    const regex = new RegExp(`\\b(mở|vào|chuyển|sang|xem)\\s+${phrase}\\b`, "i");
+    return regex.test(normalizedText);
+  });
+  if (matchesYoutube) {
+    return { type: "SWITCH_VIEW", view: "youtube" };
+  }
+
+  // 7. SEARCH (Starts with check, must extract remaining part)
+  const searchPrefixes = ["tìm kiếm", "search for", "mở bài", "tìm bài", "tìm", "search"];
+  for (const prefix of searchPrefixes) {
+    if (normalizedText.startsWith(prefix)) {
+      const query = normalizedText.substring(prefix.length).trim();
+      if (query) {
+        return { type: "SEARCH", query };
+      } else {
+        // If they said only the search keyword like "tìm kiếm" with no query, return UNRECOGNIZED
+        return { type: "UNRECOGNIZED", raw: text };
+      }
+    }
+  }
+
+  // 8. PLAY
+  const playPhrases = [
+    "phát", "chạy", "tiếp", "nghe", "mở", "bật", "vào", 
+    "play", "resume", "go", "continue", "đọc", "đọc tiếp", 
+    "tiếp đi", "mở giùm", "mở hộ", "chạy tiếp", "mở nhạc"
+  ];
+  if (playPhrases.includes(normalizedText) || playPhrases.some(p => normalizedText === p)) {
+    return { type: "PLAY" };
+  }
+
+  // 9. PAUSE
+  const pausePhrases = [
+    "tạm dừng", "dừng", "ngừng", "ngưng", "tắt", "thôi", 
+    "pause", "stop", "halt", "nghỉ", "im", "im lặng", 
+    "dừng lại", "dừng giùm"
+  ];
+  if (pausePhrases.includes(normalizedText)) {
+    return { type: "PAUSE" };
+  }
+
+  // If no specific match was found, return UNRECOGNIZED
   return { type: "UNRECOGNIZED", raw: text };
 }

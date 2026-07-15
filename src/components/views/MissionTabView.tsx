@@ -179,6 +179,7 @@ export default function MissionTabView({
   savedBriefings
 }: MissionStudioProps) {
   const [activeStage, setActiveStage] = useState<number>(1);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isRssModalOpen, setIsRssModalOpen] = useState(false);
   const [isScrapePanelOpen, setIsScrapePanelOpen] = useState(false);
   const [scrapeUrl, setScrapeUrl] = useState("");
@@ -448,6 +449,28 @@ export default function MissionTabView({
   const [previewPlayingVoice, setPreviewPlayingVoice] = useState<string | null>(null);
   const previewAudioRef = React.useRef<HTMLAudioElement | null>(null);
 
+  // Helper to focus and scroll to the textarea
+  const focusAndScrollToTextarea = () => {
+    setTimeout(() => {
+      const textarea = textareaRef.current;
+      if (textarea) {
+        textarea.focus();
+        const length = textarea.value.length;
+        textarea.setSelectionRange(length, length);
+        textarea.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 200);
+  };
+
+  // Watch for the transition of isGeneratingNews from true to false
+  const prevIsGeneratingNews = useRef(isGeneratingNews);
+  useEffect(() => {
+    if (prevIsGeneratingNews.current && !isGeneratingNews && newsContent) {
+      focusAndScrollToTextarea();
+    }
+    prevIsGeneratingNews.current = isGeneratingNews;
+  }, [isGeneratingNews, newsContent]);
+
   // --- Reconstructed UI for Mission Studio Subtabs ---
   // Using activeSubTab from App.tsx instead of activeStage
 
@@ -469,7 +492,10 @@ export default function MissionTabView({
                  if (setMissionStudioSubTab) setMissionStudioSubTab("draft");
                }}
                isGenerating={isProcessing}
-               onAddToDraft={(text) => setNewsContent(prev => prev ? prev + "\n\n" + text : text)}
+               onAddToDraft={(text) => {
+                 setNewsContent(prev => prev ? prev + "\n\n" + text : text);
+                 focusAndScrollToTextarea();
+               }}
              />
           </div>
 
@@ -479,7 +505,6 @@ export default function MissionTabView({
                 onSelectTopic={(topic) => {
                   if (setIsRssBasedGeneration) setIsRssBasedGeneration(false);
                   if (handleCreateNews) handleCreateNews(topic);
-                  if (setMissionStudioSubTab) setMissionStudioSubTab("draft");
                 }}
                 isGenerating={isProcessing}
              />
@@ -512,6 +537,7 @@ export default function MissionTabView({
                        if (data.success && data.content) {
                            setNewsContent(prev => prev ? prev + "\n\n" + data.content : data.content);
                          setScrapeUrl("");
+                         focusAndScrollToTextarea();
                        } else {
                          throw new Error(data.error || "No content found");
                        }
@@ -553,6 +579,7 @@ export default function MissionTabView({
           <div className="bg-surface-bg border border-border-subtle rounded-2xl p-6 shadow-sm flex flex-col h-full min-h-[500px]">
              <h3 className="font-black text-sm uppercase tracking-widest mb-4">{uiLanguage === "vi" ? "Hoặc dán văn bản" : "Or paste raw text"}</h3>
              <textarea
+               ref={textareaRef}
                className="flex-1 w-full bg-surface-subtle text-text-main placeholder:text-text-muted rounded-xl p-4 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-brand-accent/50 mb-4"
                placeholder={pt.sourcePlaceholder}
                value={newsContent}

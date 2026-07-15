@@ -152,6 +152,11 @@ describe("useSpeechRecognition Hook (Prompt B8)", () => {
       result.current.startListening();
     });
 
+    // Wait for the asynchronous onstart mock timeout to execute and set isListening to true
+    await vi.waitFor(() => {
+      expect(result.current.isListening).toBe(true);
+    });
+
     await act(async () => {
       lastInstance.onend();
     });

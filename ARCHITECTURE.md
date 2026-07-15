@@ -65,6 +65,7 @@ Business and infrastructure services are separated into individual decoupled mod
 *   **Storage Capability (`offlineStorageService.ts` / `indexedDBQueue.ts`)**: Manages local caching of multi-block audio chunks (Base64 buffers) and mission script metadata, allowing smooth offline playback on mobile devices without redownloading.
 *   **Feed Capability (`rssService.ts`)**: Resolves, fetches, and parses raw XML feeds into structured content models.
 *   **Telemetry Capability (`telemetryService.ts`)**: Tracks player metrics (play, pause, skip, completion rate) to analyze usability and user behavior.
+*   **Entertainment Capability (`youtubeFeedService.ts` / `rankingEngine.ts` / `recommendationEngine.ts` / `feedCacheService.ts`)**: Decouples the driving entertainment workflow, coordinating YouTube API fetching, ETag-aware caching, hot metric ranking, personal match recommendations, and driving context safety filters (de-prioritizing heavy visual content).
 
 ### B. Express Server Proxy & Modular Routing (`server.ts` & `src/server/routes/`)
 The server encapsulates cloud SDK operations and handles computationally expensive formatting tasks. It uses a modular routing architecture (Strangler-Fig pattern) to separate domain-specific logic:

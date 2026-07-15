@@ -55,6 +55,12 @@ function playTick() {
     gain.connect(ctx.destination);
     osc.start();
     osc.stop(ctx.currentTime + 0.05);
+
+    setTimeout(() => {
+      try { osc.disconnect(); } catch (e) {}
+      try { gain.disconnect(); } catch (e) {}
+      try { ctx.close(); } catch (e) {}
+    }, 100);
   } catch (e) {
     console.warn("Failed to play tick sound", e);
   }

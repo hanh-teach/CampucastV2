@@ -1,3 +1,40 @@
+## [7.39.0-Stable] - 2026-07-14
+### Added
+- **Dynamic YouTube Entertainment Engine (`youtubeFeedService.ts`)**:
+  - Replaced static `MOCK_VIDEOS` with a fully dynamic full-stack service (`YouTubeFeedService`) coordinating public YouTube API, local cache, and dynamic randomized fallback generator to prevent empty states or stale lists.
+  - Formulated a comprehensive ETag-aware caching system and memory cache with a 10-minute TTL to optimize request volume while driving.
+- **Hot Content Ranking Engine (`rankingEngine.ts`)**:
+  - Engineered a mathematical ranking formula calculating HOT scores dynamically based on size log scale (views), engagement rate (likes-to-views ratio), and freshness decay (halving every 5 days).
+- **AI Recommendation Engine (`recommendationEngine.ts`)**:
+  - Designed an AI-driven matching algorithm that scores candidate videos against user's topic preferences from `preferenceService` / IndexedDB.
+  - Implemented a specialized Driving Mode filter that prioritizes audio-friendly titles (lofi, news, podcasts) and down-ranks highly visual content (tutorials, games) to safeguard driver safety.
+- **Deep Interactive Personalization**:
+  - Integrated full local state lists for "Recently Played" and "Liked/Saved" videos inside `YouTubeEntertainmentTab.tsx`.
+  - Added a tactile "Like" Heart button on the main playback control bar that records direct "like" interactions to help the engine learn.
+
+## [7.38.9-Stable] - 2026-07-14
+### Fixed
+- **Voice Command Parser Reliability (`parseVoiceCommand.ts`)**:
+  - Replaced ambiguous, overlapping regex-based command matching with a priority-based deterministic parser (hierarchically checking EXIT > NEXT > FORWARD > REWIND > BRIEFING > YOUTUBE > SEARCH > PLAY > PAUSE).
+  - Resolved command matching collision where common playlist terms (e.g., "mở") incorrectly hijacked play controls.
+- **Voice Assistant Callback Stability (`useSpeechRecognition.ts`)**:
+  - Solved stale closures in speech recognition events by implementing the **Latest Callback Ref Pattern**, binding dynamic component callback states (`onTranscript`, `onStart`, `onEnd`, `onError`) via React refs instead of recreating the Web Speech API instance.
+- **AudioContext and Playback Resource Leaks (`DrivingMode.tsx`, `useDrivingMode.ts`)**:
+  - Implemented automatic cleanup of active oscillators and gain nodes upon completion or cancellation of beeps, preventing memory leaks.
+  - Ensured correct lifecycle disposal of `sharedBeepAudioContext` and `SpeechSynthesis` cancellation when the Driving Mode component is unmounted.
+  - Eliminated `AudioContext` leakage in the `playTick` audio feedback by properly closing and releasing hardware resources after playback completes.
+- **Ducking & Playback Volume Coordination**:
+  - Bound real-time voice state indicators (`isListening` and `isSpeechActive`) into a consolidated `isDucked` property, automatically reducing the volume of the playing podcast when either the assistant is listening or speaking, and smoothly restoring volume when done.
+- **Offline Mode Usability and Fallbacks**:
+  - Enhanced the center HUD panel status message to smoothly display `"Voice Control Suspended • Offline"` when internet connectivity is lost, eliminating duplicate text matches and improving reliability.
+
+## [7.38.8-Stable] - 2026-07-14
+### Fixed
+- **Mission Studio Workspace Sourcing Flow (`MissionTabView.tsx`)**:
+  - **Topic Suggestions Integration Correction**: Removed automatic tab switching to "Draft" when choosing a recommended AI topic. Now, selecting a topic generates the raw content directly into the editor workspace, allowing users to review and edit it first.
+  - **RSS Article Editor Focus & Smooth Scrolling**: Configured a React `useRef` pointing to the draft textarea. Clicking "Thêm vào soạn thảo" (Append to Draft / Add to editor) inside the RSS Feed Reader or scraping content from URLs now triggers smooth scrolling and sets focus directly onto the raw text editor, making it incredibly easy to review or modify text before generating the script.
+  - **User-Centric Next Actions**: Users now explicitly review raw inputs and press "Tiếp theo" (Next) to proceed, preventing premature tab switches and improving user control over the content pipeline.
+
 ## [7.38.7-Stable] - 2026-07-13
 ### Fixed
 - **Driving Mode Microphone Usability & Safety-Loop Safeguards (`DrivingMode.tsx`, `useDrivingMode.ts`)**:

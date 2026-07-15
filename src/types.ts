@@ -1,3 +1,5 @@
+import { QueueItem } from "./features/types";
+
 export enum LanguageMode {
   VN_ONLY = "VN_ONLY",
   EN_ONLY = "EN_ONLY",
@@ -84,6 +86,47 @@ export interface VoiceHistoryItem {
   answer: string;
   language: "vi" | "en";
   sources?: Array<{ title: string; uri: string }>;
+}
+
+export interface UnifiedUserProfile {
+  id: string;
+  youtube: {
+    history: string[];
+    likedVideoIds: string[];
+    subscribedChannelIds: string[];
+    watchLaterIds: string[];
+    savedIds: string[];
+    recentlyPlayed: string[];
+    recentlyWatched: string[];
+    frequentlyPlayed: string[];
+    frequentlyWatched: string[];
+    favoriteChannels: string[];
+  };
+  podcast: {
+    history: string[];
+    favorites: string[];
+    subscriptions: string[];
+    continueListening: string[];
+  };
+  rss: {
+    history: string[];
+    favorites: string[];
+    subscriptions: string[];
+  };
+  voice: {
+    history: VoiceHistoryItem[];
+  };
+  driving: {
+    history: string[];
+    totalDrivingSeconds: number;
+  };
+  search: {
+    history: string[];
+    recentlySearched: string[];
+  };
+  settings: UserPreferences;
+  favorites: string[];
+  playbackHistory: QueueItem[];
 }
 
 export interface RSSFeed {
@@ -183,6 +226,8 @@ export interface PerceivedPerformanceMetric {
   didReload: boolean;
 }
 
+export type CategoryType = "New" | "Trending" | "For You" | "AI Suggestions" | "Search Results";
+
 export interface YouTubeVideo {
   id: string;
   title: string;
@@ -190,8 +235,18 @@ export interface YouTubeVideo {
   thumbnailUrl: string;
   duration?: string;
   viewCount?: string;
-  category: "New" | "Trending" | "For You" | "AI Suggestions" | "Search Results";
+  publishedAt?: string;
+  likeCount?: string;
+  trendingScore?: number;
+  recommendationScore?: number;
+  category: CategoryType;
   isAudioFriendly: boolean; // AI Filtering flag
+  personalFeedCategory?: string; // Phase 4 requirement
+}
+
+export interface FeedResponse {
+  videos: YouTubeVideo[];
+  nextPageToken?: string;
 }
 
 export interface YouTubePlayerState {

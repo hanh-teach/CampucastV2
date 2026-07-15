@@ -21,6 +21,18 @@ The persisted versions of generated audio scripts.
 - `SavedSummary`: Represents a brief stored in local storage, containing the `SummaryPayload` and metadata.
 - `PublishedEpisode`: Represents a fully generated and hosted audio broadcast, containing references to the original audio file (`audioUrl`) and the `SummaryPayload`.
 
+### YouTubeVideo
+The unified data structure representing a curated video item within the entertainment stream.
+- `id`: The unique YouTube Video ID.
+- `title`: Video title string.
+- `channelTitle`: Channel name string.
+- `thumbnailUrl`: URL of the video thumbnail.
+- `viewCount`: Dynamic or fallback number of views.
+- `likeCount`: Dynamic or fallback number of likes.
+- `publishedAt`: Timestamp of original publication.
+- `hotScore`: Dynamically calculated engagement score.
+- `recommendationScore`: Dynamically calculated personal match relevance score.
+
 ### BroadcastConfiguration
 Manages the user's settings and playback configurations for the generation flow.
 - Preferences such as `voice`, `speed`, `tone`, `aiMode`, `languageMode`.

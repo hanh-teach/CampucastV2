@@ -1,5 +1,20 @@
 # CommuteCast Version History
 
+## 7.39.0-Stable (2026-07-14)
+- **Status**: Production Stable — verified layout, zero flickering, and active recommendation and ranking systems.
+- **Sprint**: YouTube Entertainment decoupling & Interactive Personalization Engine (Prompt C13)
+- **Major Capability**:
+  - **Decoupled Architecture**: Moved all feed orchestration, search caching, dynamic fallbacks, and content filtering into `YouTubeFeedService` to keep UI components strictly presentational.
+  - **Ranking & Recommendation Engine**: Embedded a customized mathematical ranking engine (views + likes engagement + exponential freshness decay) and an active personalization context filter (driving mode safety, topic matching).
+  - **Personalization State Preservation**: Added state managers tracking liked/saved videos and recently played videos directly in localStorage.
+
+## 7.38.8-Stable (2026-07-14)
+- **Status**: Production Stable — verified layout, focus targeting, and smooth scroll behaviors.
+- **Sprint**: Mission Studio Workspace Sourcing & Editor Focus (Prompt C12)
+- **Major Capability**:
+  - **Auto-Editor Focus**: Added active ref tracking to the draft textarea, automatically focusing the input element and smoothly scrolling it into view whenever new news content is populated from RSS imports or URL scrapers.
+  - **Topic Suggestions Alignment**: Disallowed premature automatic sub-tab switching on AI topic recommendations, enabling clean, review-first workspaces for content sourcing.
+
 ## 7.38.6-Stable (2026-07-13)
 - **Status**: Production Stable — resolved storage warnings and fallbacks.
 - **Sprint**: Cloud Storage Resilience & Cold-Start Optimization

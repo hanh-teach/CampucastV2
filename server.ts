@@ -262,7 +262,7 @@ app.get("/api/share/:id", async (req, res): Promise<any> => {
 });
 
 app.get("/api/youtube", async (req, res) => {
-  const { q, chart } = req.query;
+  const { q, chart, order, pageToken } = req.query;
   const cookieHeader = req.headers.cookie;
   const sessionId = cookieHeader?.split('; ').find(row => row.startsWith('sessionId='))?.split('=')[1];
   const accessToken = sessionId ? oauthTokens.get(sessionId) : null;
@@ -274,8 +274,15 @@ app.get("/api/youtube", async (req, res) => {
       url += `videos?part=snippet,contentDetails,statistics&chart=mostPopular&regionCode=VN&maxResults=10`;
     } else if (q) {
       url += `search?part=snippet&q=${encodeURIComponent(q as string)}&type=video&maxResults=10`;
+      if (order) {
+        url += `&order=${order}`;
+      }
     } else {
       return res.status(400).json({ error: "Invalid parameters." });
+    }
+
+    if (pageToken) {
+      url += `&pageToken=${pageToken}`;
     }
 
     if (accessToken) {

@@ -36,6 +36,28 @@ export function useSpeechRecognition({
   const manualStopRef = useRef<boolean>(false);
   const lastEndTimeRef = useRef<number>(0);
 
+  // Latest Callback Refs Pattern to avoid stale closures and infinite re-creation loops
+  const onTranscriptRef = useRef(onTranscript);
+  const onStartRef = useRef(onStart);
+  const onEndRef = useRef(onEnd);
+  const onErrorRef = useRef(onError);
+
+  useEffect(() => {
+    onTranscriptRef.current = onTranscript;
+  }, [onTranscript]);
+
+  useEffect(() => {
+    onStartRef.current = onStart;
+  }, [onStart]);
+
+  useEffect(() => {
+    onEndRef.current = onEnd;
+  }, [onEnd]);
+
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
   // Helper to get localized messages
   const getLocalizedMessages = useCallback(() => {
     return {
@@ -70,10 +92,10 @@ export function useSpeechRecognition({
       }
       recognitionRef.current = null;
     }
-    if (onEnd) {
-      onEnd();
+    if (onEndRef.current) {
+      onEndRef.current();
     }
-  }, [onEnd]);
+  }, []);
 
   // Handle offline event during active recording
   useEffect(() => {
@@ -83,8 +105,8 @@ export function useSpeechRecognition({
         setErrorType("offline");
         setErrorMessage(msgs.offline);
         stopListening();
-        if (onError) {
-          onError("offline", msgs.offline, "network-offline");
+        if (onErrorRef.current) {
+          onErrorRef.current("offline", msgs.offline, "network-offline");
         }
       }
     };
@@ -93,7 +115,7 @@ export function useSpeechRecognition({
     return () => {
       window.removeEventListener("offline", handleOffline);
     };
-  }, [getLocalizedMessages, stopListening, onError]);
+  }, [getLocalizedMessages, stopListening]);
 
   const startListening = useCallback(() => {
     manualStopRef.current = false;
@@ -106,8 +128,8 @@ export function useSpeechRecognition({
     if (!navigator.onLine) {
       setErrorType("offline");
       setErrorMessage(msgs.offline);
-      if (onError) {
-        onError("offline", msgs.offline, "start-offline");
+      if (onErrorRef.current) {
+        onErrorRef.current("offline", msgs.offline, "start-offline");
       }
       return;
     }
@@ -118,8 +140,8 @@ export function useSpeechRecognition({
     if (!SpeechRecognitionClass) {
       setErrorType("unsupported");
       setErrorMessage(msgs.unsupported);
-      if (onError) {
-        onError("unsupported", msgs.unsupported, "api-missing");
+      if (onErrorRef.current) {
+        onErrorRef.current("unsupported", msgs.unsupported, "api-missing");
       }
       return;
     }
@@ -142,8 +164,8 @@ export function useSpeechRecognition({
         }
         setIsListening(true);
         activeListeningRef.current = true;
-        if (onStart) {
-          onStart();
+        if (onStartRef.current) {
+          onStartRef.current();
         }
       };
 
@@ -173,8 +195,8 @@ export function useSpeechRecognition({
         setIsListening(false);
         activeListeningRef.current = false;
 
-        if (onError) {
-          onError(type, msg, event.error);
+        if (onErrorRef.current) {
+          onErrorRef.current(type, msg, event.error);
         }
       };
 
@@ -184,8 +206,8 @@ export function useSpeechRecognition({
         activeListeningRef.current = false;
         
         // If not manually stopped, it means browser auto-ended (e.g. 60s timeout in continuous mode)
-        if (onEnd) {
-          onEnd();
+        if (onEndRef.current) {
+          onEndRef.current();
         }
       };
 
@@ -195,8 +217,8 @@ export function useSpeechRecognition({
           const result = event.results[i];
           if (result.isFinal) {
             const transcript = result[0].transcript;
-            if (onTranscript && transcript && transcript.trim() !== "") {
-              onTranscript(transcript);
+            if (onTranscriptRef.current && transcript && transcript.trim() !== "") {
+              onTranscriptRef.current(transcript);
             }
           }
         }
@@ -211,11 +233,11 @@ export function useSpeechRecognition({
       setErrorMessage(msgs.generalError);
       setIsListening(false);
       activeListeningRef.current = false;
-      if (onError) {
-        onError("error", msgs.generalError, err.message || "startup-failed");
+      if (onErrorRef.current) {
+        onErrorRef.current("error", msgs.generalError, err.message || "startup-failed");
       }
     }
-  }, [uiLanguage, lang, continuous, interimResults, getLocalizedMessages, onTranscript, onStart, onEnd, onError]);
+  }, [uiLanguage, lang, continuous, interimResults, getLocalizedMessages, speechRecognitionFactory]);
 
   useEffect(() => {
     return () => {

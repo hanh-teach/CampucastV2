@@ -1,5 +1,6 @@
 // src/features/store.ts
 import { VoiceProfile, AIMemoryItem, PersonalizedMemory, ListenStats, QueueItem, FeatureSettings, AccessibilityConfig } from "./types";
+import { UnifiedUserProfile } from "../types";
 
 // Keys
 const KEYS = {
@@ -12,7 +13,8 @@ const KEYS = {
   HISTORY: "cc_playback_history",
   FAVORITES: "cc_favorite_ids",
   REPEAT_MODE: "cc_repeat_mode",
-  AUTO_CONTINUE: "cc_auto_continue"
+  AUTO_CONTINUE: "cc_auto_continue",
+  UNIFIED_USER_PROFILE: "cc_unified_user_profile"
 };
 
 const DEFAULT_VOICE_PROFILE: VoiceProfile = {
@@ -69,6 +71,24 @@ class FeatureEventEmitter extends EventTarget {
   }
 }
 export const featureStoreEvents = new FeatureEventEmitter();
+
+export const getUnifiedUserProfile = (): UnifiedUserProfile | null => {
+  try {
+    const saved = localStorage.getItem(KEYS.UNIFIED_USER_PROFILE);
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    return null;
+  }
+};
+
+export const saveUnifiedUserProfile = (profile: UnifiedUserProfile) => {
+  try {
+    localStorage.setItem(KEYS.UNIFIED_USER_PROFILE, JSON.stringify(profile));
+    featureStoreEvents.emitChange();
+  } catch (e) {
+    console.warn("Failed to save unified user profile:", e);
+  }
+};
 
 // Safe storage accessors
 export const getVoiceProfile = (): VoiceProfile => {

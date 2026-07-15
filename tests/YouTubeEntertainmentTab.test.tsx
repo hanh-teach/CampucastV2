@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render } from "@testing-library/react";
+import { render, act } from "@testing-library/react";
 import React from "react";
 import { YouTubeEntertainmentTab } from "../src/components/YouTubeEntertainmentTab";
 
@@ -19,6 +19,32 @@ vi.mock("motion/react", () => ({
   useMotionValue: vi.fn(),
   useTransform: vi.fn(),
   useSpring: vi.fn(),
+}));
+
+// Mock FeedOrchestrator & recordInteraction to decouple tests from dynamic execution layers
+vi.mock("../src/services/feedOrchestrator", () => ({
+  FeedOrchestrator: {
+    getFeed: vi.fn().mockResolvedValue({
+      videos: [
+        {
+          id: "test-video-id",
+          title: "Test Music Video",
+          channelTitle: "Test Channel",
+          thumbnailUrl: "https://example.com/thumb.jpg",
+          viewCount: 1000,
+          likeCount: 100,
+          publishedAt: "2026-07-14T00:00:00Z",
+          hotScore: 90,
+          recommendationScore: 85
+        }
+      ],
+      nextPageToken: undefined
+    })
+  }
+}));
+
+vi.mock("../src/services/interactionService", () => ({
+  recordInteraction: vi.fn().mockResolvedValue(undefined)
 }));
 
 describe("YouTubeEntertainmentTab", () => {
@@ -46,11 +72,8 @@ describe("YouTubeEntertainmentTab", () => {
       },
     };
 
+    (window as any).YT = YT;
     vi.stubGlobal("YT", YT);
-    vi.stubGlobal("window", {
-        ...window,
-        YT: YT
-    });
   });
 
   it("should trigger volume change on isDucked toggle", async () => {
@@ -59,26 +82,39 @@ describe("YouTubeEntertainmentTab", () => {
       <YouTubeEntertainmentTab
         isDucked={false}
         uiLanguage="en"
-        voiceSearchQuery={null}
+        voiceSearchQuery={undefined}
         onClearSearch={vi.fn()}
       />
     );
+
+    // Flush promises so fetchFeed finishes, sets state, and triggers player initialization
+    await act(async () => {
+      await Promise.resolve();
+    });
 
     // Simulate player ready
-    onReadyCallback();
+    act(() => {
+      if (typeof onReadyCallback === "function") {
+        onReadyCallback();
+      }
+    });
 
     // Trigger ducking
-    rerender(
-      <YouTubeEntertainmentTab
-        isDucked={true}
-        uiLanguage="en"
-        voiceSearchQuery={null}
-        onClearSearch={vi.fn()}
-      />
-    );
+    act(() => {
+      rerender(
+        <YouTubeEntertainmentTab
+          isDucked={true}
+          uiLanguage="en"
+          voiceSearchQuery={undefined}
+          onClearSearch={vi.fn()}
+        />
+      );
+    });
 
     // Fast-forward timers for ramping
-    vi.advanceTimersByTime(300);
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
 
     // Assert setVolume called
     expect(mockPlayer.setVolume).toHaveBeenCalled();

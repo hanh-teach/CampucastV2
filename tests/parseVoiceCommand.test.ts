@@ -6,8 +6,8 @@ describe("parseVoiceCommand", () => {
     expect(parseVoiceCommand("phát", "vi")).toEqual({ type: "PLAY" });
     expect(parseVoiceCommand("play", "en")).toEqual({ type: "PLAY" });
     expect(parseVoiceCommand("tiếp đi", "vi")).toEqual({ type: "PLAY" });
-    // "mở giùm" matches "mở" in youtube switch view regex first in original code
-    expect(parseVoiceCommand("mở giùm", "vi")).toEqual({ type: "SWITCH_VIEW", view: "youtube" });
+    // "mở giùm" is now correctly parsed as PLAY
+    expect(parseVoiceCommand("mở giùm", "vi")).toEqual({ type: "PLAY" });
     expect(parseVoiceCommand("resume", "en")).toEqual({ type: "PLAY" });
   });
 
@@ -43,8 +43,8 @@ describe("parseVoiceCommand", () => {
   it("should parse exit commands", () => {
     expect(parseVoiceCommand("thoát", "vi")).toEqual({ type: "EXIT" });
     expect(parseVoiceCommand("exit", "en")).toEqual({ type: "EXIT" });
-    // "quay về" matches in rewindRegex first in original code
-    expect(parseVoiceCommand("quay về", "vi")).toEqual({ type: "REWIND", seconds: 15 });
+    // "quay về" is now correctly parsed as EXIT
+    expect(parseVoiceCommand("quay về", "vi")).toEqual({ type: "EXIT" });
     expect(parseVoiceCommand("close", "en")).toEqual({ type: "EXIT" });
   });
 

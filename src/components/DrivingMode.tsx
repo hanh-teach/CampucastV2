@@ -64,9 +64,18 @@ function playBeep(frequency: number, duration: number, double: boolean = false) 
       osc.start(ctx.currentTime + timeOffset);
       osc.stop(ctx.currentTime + timeOffset + duration);
 
+      const cleanup = () => {
+        try { osc.disconnect(); } catch (e) {}
+        try { gain.disconnect(); } catch (e) {}
+      };
+
+      const timeoutId = setTimeout(cleanup, (timeOffset + duration + 0.1) * 1000);
+
       activeOscillators.push({
         stop: () => {
+          clearTimeout(timeoutId);
           try { osc.stop(); } catch(e){}
+          cleanup();
         }
       });
     };
@@ -82,7 +91,12 @@ function playBeep(frequency: number, duration: number, double: boolean = false) 
   }
 }
 
-function playTTSFeedback(text: string, uiLanguage: "vi" | "en") {
+function playTTSFeedback(
+  text: string, 
+  uiLanguage: "vi" | "en", 
+  onStart?: () => void, 
+  onEnd?: () => void
+) {
   try {
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel(); // cancel current speech immediately to prevent overlap
@@ -91,9 +105,19 @@ function playTTSFeedback(text: string, uiLanguage: "vi" | "en") {
     const cleanText = text.replace(/[\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD00-\uDFFF]/g, '').trim();
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = uiLanguage === "vi" ? "vi-VN" : "en-US";
+    
+    if (onStart) {
+      utterance.onstart = onStart;
+    }
+    if (onEnd) {
+      utterance.onend = onEnd;
+      utterance.onerror = onEnd; // fallback if speech error occurs
+    }
+    
     window.speechSynthesis.speak(utterance);
   } catch (err) {
     console.error("Failed to play TTS feedback:", err);
+    if (onEnd) onEnd();
   }
 }
 
@@ -144,6 +168,17 @@ export default function DrivingMode({
   const [localFeedback, setLocalFeedback] = useState("");
   const [activeView, setActiveView] = useState<"briefing" | "youtube">("briefing");
   const [voiceSearchQuery, setVoiceSearchQuery] = useState<string | undefined>(undefined);
+  const [isSpeechActive, setIsSpeechActive] = useState(false);
+
+  const playTTS = useCallback((msg: string) => {
+    setIsSpeechActive(true);
+    playTTSFeedback(
+      msg,
+      uiLanguage,
+      () => setIsSpeechActive(true),
+      () => setIsSpeechActive(false)
+    );
+  }, [uiLanguage]);
 
   const handleVoiceCommand = useCallback((commandText: string) => {
     const action = parseVoiceCommand(commandText, uiLanguage);
@@ -151,7 +186,9 @@ export default function DrivingMode({
     const triggerSuccessFeedback = (msg: string) => {
       setLocalFeedback(msg);
       playBeep(880, 0.1);
-      playTTSFeedback(msg, uiLanguage);
+      setTimeout(() => {
+        playTTS(msg);
+      }, 150);
       if (preferences.hapticFeedbackEnabled !== false && typeof navigator !== "undefined" && navigator.vibrate) {
         navigator.vibrate(50);
       }
@@ -206,7 +243,7 @@ export default function DrivingMode({
     }
 
     setTimeout(() => setLocalFeedback(""), 3000);
-  }, [isPlaying, onPlayPause, onSkip, onExit, onNext, uiLanguage, preferences.hapticFeedbackEnabled]);
+  }, [isPlaying, onPlayPause, onSkip, onExit, onNext, uiLanguage, preferences.hapticFeedbackEnabled, playTTS]);
 
   const {
     isListening,
@@ -219,9 +256,38 @@ export default function DrivingMode({
     vibrate
   } = useDrivingMode(uiLanguage, { onCommand: handleVoiceCommand });
 
+  const isDucked = isListening || isSpeechActive;
+
   useEffect(() => {
-    if (onDuckingChange) onDuckingChange(isListening);
-  }, [isListening, onDuckingChange]);
+    if (onDuckingChange) onDuckingChange(isDucked);
+  }, [isDucked, onDuckingChange]);
+
+  useEffect(() => {
+    return () => {
+      // Clean up SpeechSynthesis to prevent overlaps/hanging speech
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        try {
+          window.speechSynthesis.cancel();
+        } catch (e) {}
+      }
+
+      // Stop any remaining beep audio sources
+      activeOscillators.forEach(osc => {
+        try { osc.stop(); } catch(e){}
+      });
+      activeOscillators = [];
+
+      // Close Beep AudioContext
+      if (sharedBeepAudioContext) {
+        try {
+          sharedBeepAudioContext.close();
+        } catch (e) {
+          console.warn("Failed to close sharedBeepAudioContext:", e);
+        }
+        sharedBeepAudioContext = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (isContinuous) startSpeechRecognition();
@@ -239,7 +305,9 @@ export default function DrivingMode({
         const msg = uiLanguage === "vi" ? "Mất mạng: Đã tắt giọng nói" : "Offline: Voice control disabled";
         setLocalFeedback(msg);
         playBeep(440, 0.2, true); // Warning beep
-        playTTSFeedback(msg, uiLanguage);
+        setTimeout(() => {
+          playTTS(msg);
+        }, 250);
         setTimeout(() => setLocalFeedback(""), 4000);
       }
     };
@@ -249,7 +317,7 @@ export default function DrivingMode({
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, [isContinuous, setIsContinuous, stopSpeechRecognition, uiLanguage]);
+  }, [isContinuous, setIsContinuous, stopSpeechRecognition, uiLanguage, playTTS]);
 
   useEffect(() => {
     const docElm = document.documentElement;
@@ -296,7 +364,7 @@ export default function DrivingMode({
       statusListening: "🎙️ Đang lắng nghe...",
       statusProcessing: "⚙️ Đang xử lý...",
       savedTitle: "Bản tin lưu trữ",
-      voiceOffline: "Điều khiển giọng nói tạm ngưng — mất kết nối mạng"
+      voiceOffline: "Mất kết nối mạng — Ngoại tuyến"
     },
     en: {
       modeActive: "DRIVING HUD ACTIVE",
@@ -475,6 +543,12 @@ export default function DrivingMode({
                         )}
                       </p>
                     </motion.div>
+                  ) : isOffline ? (
+                    <div className="text-[10px] font-bold text-amber-500/80 uppercase tracking-[0.15em] text-center">
+                      {uiLanguage === "vi" 
+                        ? "Điều khiển giọng nói tạm ngưng • Ngoại tuyến" 
+                        : "Voice Control Suspended • Offline"}
+                    </div>
                   ) : (
                     <div className="text-[10px] font-bold text-white/30 uppercase tracking-[0.15em] text-center">
                       {uiLanguage === "vi" 
