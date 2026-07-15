@@ -259,7 +259,10 @@ export default function PodcastManager({
         ) : (
           <div className="flex flex-col gap-2.5 max-h-[250px] overflow-y-auto pr-1">
             {podcastEpisodes.map((ep) => {
-              const fileName = ep.audioUrl.split("/").pop();
+              if (!ep) return null;
+              const fileName = ep.audioUrl ? ep.audioUrl.split("/").pop() : "audio_file.mp3";
+              const formattedDate = ep.pubDate ? new Date(ep.pubDate).toLocaleDateString() : new Date().toLocaleDateString();
+              const durationText = ep.duration !== undefined ? `${ep.duration}s` : "0s";
               return (
                 <div
                   key={ep.id}
@@ -268,7 +271,7 @@ export default function PodcastManager({
                 >
                   <div className="min-w-0 flex-1">
                     <h4 className="text-xs font-bold truncate" style={{ color: colors.textPrimary }}>
-                      {ep.title}
+                      {ep.title || ep.id}
                     </h4>
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-[9px] font-semibold font-mono" style={{ color: colors.textMuted }}>
                       <span className="truncate max-w-[140px] px-1.5 py-0.5 rounded border"
@@ -276,9 +279,9 @@ export default function PodcastManager({
                         {fileName}
                       </span>
                       <span>•</span>
-                      <span>🕒 {new Date(ep.pubDate).toLocaleDateString()}</span>
+                      <span>🕒 {formattedDate}</span>
                       <span>•</span>
-                      <span>⌛ {ep.duration}s</span>
+                      <span>⌛ {durationText}</span>
                     </div>
                   </div>
 

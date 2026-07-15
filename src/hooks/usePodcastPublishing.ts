@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { PublishedEpisode, SavedSummary } from "../types";
 
 interface UsePodcastPublishingProps {
@@ -26,7 +26,7 @@ export function usePodcastPublishing({
     localStorage.setItem("commutecast_auto_publish", String(isAutoPublish));
   }, [isAutoPublish]);
 
-  const loadLocalOnlyEpisodes = () => {
+  const loadLocalOnlyEpisodes = useCallback(() => {
     const localSavedRaw = localStorage.getItem("commutecast_local_published_episodes");
     if (localSavedRaw) {
       try {
@@ -39,9 +39,9 @@ export function usePodcastPublishing({
       } catch (e) {}
     }
     setPodcastEpisodes([]);
-  };
+  }, []);
 
-  const loadPodcastEpisodes = async () => {
+  const loadPodcastEpisodes = useCallback(async () => {
     try {
       const res = await fetch(getApiUrl("/api/podcast/episodes"));
       if (res.ok) {
@@ -90,7 +90,7 @@ export function usePodcastPublishing({
       console.warn("Could not retrieve podcast episodes gracefully:", err.message || err);
       loadLocalOnlyEpisodes();
     }
-  };
+  }, [getApiUrl, loadLocalOnlyEpisodes]);
 
   useEffect(() => {
     loadPodcastEpisodes();

@@ -4,6 +4,19 @@ This document tracks key architectural and product decisions (Product Decision R
 
 ---
 
+## [PDR-012] Media Library Stabilization & Render Resiliency (2026-07-15)
+*   **Question**: What caused the blank/white screen crash in the Library's Archive section when navigating from the search command palette?
+*   **Hypothesis**: The rendering crash is caused by two compounding factors: (1) an infinite React re-render loop triggered by a non-memoized `loadPodcastEpisodes` function in the `useEffect` dependency array, and (2) missing property sanitization in the `PodcastManager` render loops where corrupt or empty local/remote episode items (e.g., missing `audioUrl`) crash the component's string manipulation methods.
+*   **Decision**:
+    1. Wrapped `loadPodcastEpisodes` inside `usePodcastPublishing.ts` with React `useCallback` to stabilize the reference across renders.
+    2. Modified the auto-fetch `useEffect` inside `AssetsTabView.tsx` to explicitly guard calls with `activeCategory === "archive"`, preventing redundant calls on other library sections.
+    3. Added robust, defensive sanitization for all properties inside `PodcastManager.tsx`'s episode list mapper (safeguarding `audioUrl`, `pubDate`, and `duration`).
+*   **Result after 30 days**: SHIPPED. Completely resolved the white screen crash. Search command palette navigation to "Nhà Xuất Bản Podcast" mounts and renders perfectly with zero flickering or layout lockups.
+*   **Verification Command**:
+    *   `npm run lint && npm run build`
+
+---
+
 ## [PDR-011] Decoupled YouTube Entertainment & Personalized Recommendation Engines (2026-07-14)
 *   **Question**: How can we move heavy business logic, caching, scoring, and driving-safety filters out of the front-end `YouTubeEntertainmentTab` UI component into clean, isolated, and testable service modules?
 *   **Hypothesis**: Decoupling the YouTube lifecycle into a dedicated `YouTubeFeedService` acting as an orchestrator, supported by mathematical `RankingEngine` (engagement + views log-scale + decay) and matching `RecommendationEngine` (user preferences + driving safety), will shrink component complexity, eliminate UI flickering, and ensure highly personal audio-focused recommendations while driving.

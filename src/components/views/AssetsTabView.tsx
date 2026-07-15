@@ -4,6 +4,7 @@ import { Badge } from "../ui/Badge";
 import { Card } from "../ui/Card";
 import { cn } from "../../lib/utils";
 import RSSManager from "../RSSManager";
+import PodcastManager from "../PodcastManager";
 import { getApiUrl } from "../../utils/apiUtils";
 import { 
   Folder, 
@@ -237,9 +238,9 @@ export default function AssetsTabView({
     { id: "archive", label: t.archive, icon: History, count: podcastEpisodes.length }
   ];
 
-  // Auto-fetch podcast episodes when viewing the Archive tab or on mount
+  // Auto-fetch podcast episodes when viewing the Archive tab
   useEffect(() => {
-    if (loadPodcastEpisodes) {
+    if (activeCategory === "archive" && loadPodcastEpisodes) {
       loadPodcastEpisodes();
     }
   }, [activeCategory, loadPodcastEpisodes]);
@@ -668,93 +669,31 @@ export default function AssetsTabView({
               )}
 
               {activeCategory === "archive" && (
-                filteredEpisodes.length > 0 ? (
-                  <div className="space-y-4">
-                    {filteredEpisodes.map((episode) => (
-                      <Card key={episode.id} className="p-6 border border-border-subtle bg-surface-subtle/30 space-y-4">
-                        <div className="flex justify-between items-start">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-2xl bg-brand-accent/10 border border-brand-accent/20 flex items-center justify-center text-brand-accent">
-                              <ArchiveIcon className="w-6 h-6" />
-                            </div>
-                            <div>
-                              <h4 className="font-black text-sm text-text-main truncate max-w-[200px] sm:max-w-md">{episode.title}</h4>
-                              <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest">
-                                {new Date(episode.pubDate).toLocaleDateString(uiLanguage === "vi" ? "vi-VN" : "en-US")} • {Math.floor(episode.duration / 60)}m {episode.duration % 60}s
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => window.open(episode.audioUrl, "_blank")}
-                              className="w-8 h-8 p-0 rounded-xl hover:bg-brand-accent/10 hover:text-brand-accent transition-colors"
-                            >
-                              <ExternalLink className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => {
-                                if (confirm(uiLanguage === "vi" ? "Bạn có chắc chắn muốn xóa tập podcast này khỏi kho lưu trữ?" : "Are you sure you want to delete this podcast episode from the archive?")) {
-                                  handleDeletePodcastEpisode(episode.id);
-                                }
-                              }}
-                              className="w-8 h-8 p-0 rounded-xl hover:bg-[var(--color-error)]/10 hover:text-[var(--color-error)] transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="bg-surface-bg/50 p-3 rounded-xl border border-border-subtle/40">
-                          <p className="text-xs text-text-muted line-clamp-2 leading-relaxed">
-                            {episode.description}
-                          </p>
-                        </div>
-                        <div className="flex items-center justify-between pt-2">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-[9px] font-black uppercase tracking-tighter border-border-subtle text-text-muted px-2 py-0.5">
-                              {uiLanguage === "vi" ? "Đã xuất bản" : "Published"}
-                            </Badge>
-                            <Badge variant="outline" className="text-[9px] font-black uppercase tracking-tighter border-brand-accent/20 text-brand-accent px-2 py-0.5 bg-brand-accent/5">
-                              {episode.audioUrl.includes("supabase.co") ? "Supabase" : "Local"}
-                            </Badge>
-                          </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => {
-                              if (onPlayBriefing) {
-                                onPlayBriefing({ id: episode.id, audioUrl: episode.audioUrl });
-                              } else {
-                                window.open(episode.audioUrl, "_blank");
-                              }
-                            }}
-                            className="h-8 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest border-border-subtle text-text-muted hover:text-brand-accent hover:border-brand-accent/20 transition-all flex items-center gap-2"
-                          >
-                            <Play className="w-3 h-3" />
-                            <span>{uiLanguage === "vi" ? "Nghe lại" : "Play Episode"}</span>
-                          </Button>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="py-32 text-center space-y-6">
-                    <div className="w-20 h-20 bg-surface-subtle/50 rounded-full flex items-center justify-center mx-auto border border-border-subtle">
-                      <History className="w-10 h-10 text-text-muted opacity-20" />
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-black text-text-main uppercase tracking-widest">{uiLanguage === "vi" ? "Kho lưu trữ trống" : "Archive Vault Empty"}</h3>
-                      <p className="text-[10px] text-text-muted font-medium uppercase tracking-wider max-w-xs mx-auto">
-                        {uiLanguage === "vi" 
-                          ? "Hãy xuất bản bản tin của bạn để thấy chúng xuất hiện tại đây." 
-                          : "Publish your briefings to see them appear here in the archive."}
-                      </p>
-                    </div>
-                  </div>
-                )
+                <div className="space-y-6">
+                  <PodcastManager
+                    savedBriefings={savedBriefings}
+                    podcastEpisodes={podcastEpisodes}
+                    isPublishingPodcast={isPublishingPodcast}
+                    podcastError={podcastError || ""}
+                    onPublishPodcast={async (briefId) => {
+                      const brief = savedBriefings.find(b => b.id === briefId);
+                      if (brief) {
+                        await handlePublishPodcast(brief);
+                      }
+                    }}
+                    onDeletePodcastEpisode={async (id, e) => {
+                      e.preventDefault();
+                      if (confirm(uiLanguage === "vi" ? "Bạn có chắc chắn muốn xóa tập podcast này khỏi kho lưu trữ?" : "Are you sure you want to delete this podcast episode from the archive?")) {
+                        await handleDeletePodcastEpisode(id);
+                      }
+                    }}
+                    uiLanguage={uiLanguage}
+                    isAutoPublish={isAutoPublish}
+                    setIsAutoPublish={setIsAutoPublish}
+                    selectedBriefId={selectedBriefId || ""}
+                    setSelectedBriefId={(id) => setSelectedBriefId(id || null)}
+                  />
+                </div>
               )}
             </div>
           </div>

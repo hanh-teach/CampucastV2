@@ -1,3 +1,19 @@
+## [7.39.4-Stable] - 2026-07-15
+### Fixed
+- **Infinite Render Loop Elimination on Library/Archive view**:
+  - Wrapped `loadPodcastEpisodes` in a stable, memoized `useCallback` hook inside `src/hooks/usePodcastPublishing.ts`, and optimized the `useEffect` inside `AssetsTabView.tsx` with targeted condition checks (`activeCategory === "archive"`) to eliminate the infinite render loop and lockups.
+- **Defensive Property Handling**:
+  - Added highly defensive checking inside `PodcastManager.tsx`'s render loops to gracefully handle missing, empty, or corrupt properties (such as undefined/null `audioUrl` or `pubDate`) in published episodes, preventing blank white screen crashes.
+
+## [7.39.3-Stable] - 2026-07-15
+### Changed
+- **Unified Podcast & RSS Management Integration**:
+  - Replaced the standard static archive sub-tab list inside `AssetsTabView.tsx` with the complete, interactive `PodcastManager` component.
+  - Exposes the live RSS feed URL with a dedicated "Copy Link" action button and an "Open raw XML feed" redirection link inside the central Library Tab ("Kho lưu trữ"), solving the "missing podcast link" user inquiry.
+  - Enabled full configuration management, auto-publish toggles, manual publisher triggers, and the published episode directory directly within the central media library view.
+- **Improved Search Command Palette Routing**:
+  - Rebuilt obsolete tab and action callbacks inside `getSearchResults()` in `App.tsx` to align with the modern active tab structures and subtab selectors, resolving broken command redirections and enhancing workspace usability.
+
 ## [7.39.2-Stable] - 2026-07-15
 ### Changed
 - **Unified Cloud Storage Migration (`CampucasV2_audio`)**:

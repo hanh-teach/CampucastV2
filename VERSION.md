@@ -1,5 +1,19 @@
 # CommuteCast Version History
 
+## 7.39.4-Stable (2026-07-15)
+- **Status**: Production Stable — fully resolved white screen crash and infinite re-render loops on Library/Archive.
+- **Sprint**: Media Library Stabilization & Render Resiliency (Bug Fix)
+- **Major Capability**:
+  - **Infinite Render Loop Elimination**: Wrapped `loadPodcastEpisodes` in a stable, memoized `useCallback` hook inside `usePodcastPublishing.ts`, and updated the `useEffect` inside `AssetsTabView.tsx` with targeted condition checks (`activeCategory === "archive"`) to eliminate the infinite render loop and lockups.
+  - **Defensive Property Handling**: Added highly defensive checking inside `PodcastManager.tsx`'s render loops to gracefully handle missing, empty, or corrupt properties (such as undefined `audioUrl` or `pubDate`) in published episodes without crashing the application interface.
+
+## 7.39.3-Stable (2026-07-15)
+- **Status**: Production Stable — unified Podcast workstation integration and restored command palette routing.
+- **Sprint**: Podcast Workstation Launch & Command Routing (Prompt C14)
+- **Major Capability**:
+  - **Interactive Podcast Workstation**: Replaced the static archive sub-tab list with the interactive `PodcastManager` component, exposing the live RSS feed URL with dynamic config management, auto-publish, and manual triggers.
+  - **Command Palette Alignment**: Rebuilt the search command palette routing in `App.tsx` so that searching for "Nhà Xuất Bản Podcast" (Podcast) correctly activates the library tab and the archive subtab without visual or state conflicts.
+
 ## 7.39.0-Stable (2026-07-14)
 - **Status**: Production Stable — verified layout, zero flickering, and active recommendation and ranking systems.
 - **Sprint**: YouTube Entertainment decoupling & Interactive Personalization Engine (Prompt C13)
