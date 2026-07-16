@@ -812,7 +812,11 @@ const handleApplyPreset = (index: number) => {
                   isPlaying={false}
                   currentTime={0}
                   totalDuration={0}
-                  onPlayPause={() => {}}
+                  onPlayPause={() => {
+                    if (savedBriefings && savedBriefings.length > 0) {
+                      handleApplyIntelligenceBriefing(savedBriefings[0]);
+                    }
+                  }}
                   onSkip={() => {}}
                   onScrubberChange={() => {}}
                   onExit={() => updateDrivingMode(false)}

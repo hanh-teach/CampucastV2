@@ -29,9 +29,9 @@ export function parseVoiceCommand(text: string, lang: "vi" | "en"): Action {
   // 2. NEXT
   const nextPhrases = [
     "qua bài", "tiếp theo", "bài khác", "next", "skip", 
-    "bỏ qua", "tới luôn", "bài mới", "kế tiếp"
+    "bỏ qua", "tới luôn", "bài mới", "kế tiếp", "chuyển bài"
   ];
-  if (nextPhrases.includes(normalizedText)) {
+  if (nextPhrases.some(p => normalizedText.includes(p))) {
     return { type: "NEXT" };
   }
 
@@ -40,7 +40,7 @@ export function parseVoiceCommand(text: string, lang: "vi" | "en"): Action {
     "tua nhanh", "tua tới", "forward", "fast forward", 
     "nhích lên", "tới chút", "tua đi"
   ];
-  if (forwardPhrases.includes(normalizedText)) {
+  if (forwardPhrases.some(p => normalizedText.includes(p))) {
     return { type: "FORWARD", seconds: 15 };
   }
 
@@ -49,7 +49,7 @@ export function parseVoiceCommand(text: string, lang: "vi" | "en"): Action {
     "tua lại", "lùi", "quay lại", "rewind", "back", 
     "lùi lại", "hồi nãy", "nghe lại"
   ];
-  if (rewindPhrases.includes(normalizedText)) {
+  if (rewindPhrases.some(p => normalizedText.includes(p))) {
     return { type: "REWIND", seconds: 15 };
   }
 
@@ -93,9 +93,9 @@ export function parseVoiceCommand(text: string, lang: "vi" | "en"): Action {
   const playPhrases = [
     "phát", "chạy", "tiếp", "nghe", "mở", "bật", "vào", 
     "play", "resume", "go", "continue", "đọc", "đọc tiếp", 
-    "tiếp đi", "mở giùm", "mở hộ", "chạy tiếp", "mở nhạc"
+    "tiếp đi", "mở giùm", "mở hộ", "chạy tiếp", "mở nhạc", "tiếp tục"
   ];
-  if (playPhrases.includes(normalizedText) || playPhrases.some(p => normalizedText === p)) {
+  if (playPhrases.some(p => normalizedText.includes(p))) {
     return { type: "PLAY" };
   }
 
@@ -105,7 +105,7 @@ export function parseVoiceCommand(text: string, lang: "vi" | "en"): Action {
     "pause", "stop", "halt", "nghỉ", "im", "im lặng", 
     "dừng lại", "dừng giùm"
   ];
-  if (pausePhrases.includes(normalizedText)) {
+  if (pausePhrases.some(p => normalizedText.includes(p))) {
     return { type: "PAUSE" };
   }
 
