@@ -373,6 +373,7 @@ export default function AssetsTabView({
                       uiLanguage={uiLanguage}
                       deleteOneBriefing={deleteOneBriefing}
                       archiveBriefing={archiveBriefing}
+                      getFullBriefing={getFullBriefing}
                       handleApplyIntelligenceBriefing={(b) => {
                         handleApplyIntelligenceBriefing(b);
                         setActiveTab("mission_studio");
