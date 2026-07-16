@@ -78,6 +78,9 @@ export interface SavedSummary {
   shareCount?: number;
   artworkUrl?: string;
   isArchived?: boolean; // Added in 1.1
+  archivedAt?: string;
+  archivedBy?: string;
+  archiveReason?: string;
 }
 
 export type SavePolicy = "manual" | "auto";

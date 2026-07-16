@@ -16,7 +16,8 @@ export const BriefingItem = ({
   archiveBriefing,
   handleApplyIntelligenceBriefing,
   handleRefresh,
-  showToast
+  showToast,
+  getFullBriefing
 }: any) => {
 
   const [isArchiving, setIsArchiving] = useState(false);
@@ -43,7 +44,21 @@ export const BriefingItem = ({
 
   const handleDownloadAudio = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!brief.audioChunks || brief.audioChunks.length === 0) {
+    let audioData = brief.audioChunks;
+    
+    // Nếu chưa có audioChunks, thử lấy toàn bộ briefing
+    if (!audioData || audioData.length === 0) {
+       try {
+         const fullBriefing = await getFullBriefing(brief.id);
+         if (fullBriefing && fullBriefing.audioChunks) {
+           audioData = fullBriefing.audioChunks;
+         }
+       } catch (err) {
+         console.error("Failed to fetch full briefing:", err);
+       }
+    }
+
+    if (!audioData || audioData.length === 0) {
       showToast(uiLanguage === "vi" ? "Chưa có audio để tải." : "No audio available to download.", "error");
       return;
     }
@@ -51,7 +66,7 @@ export const BriefingItem = ({
     try {
       showToast(uiLanguage === "vi" ? "Đang chuẩn bị file WAV..." : "Preparing WAV file...", "loading");
       const { exportBriefingAsWav } = await import("../../utils/audioExport");
-      await exportBriefingAsWav(brief.audioChunks, brief.payload?.title || "Briefing");
+      await exportBriefingAsWav(audioData, brief.payload?.title || "Briefing");
       showToast(uiLanguage === "vi" ? "Đã tải xuống thành công" : "Downloaded successfully", "success");
     } catch (err) {
       console.error("Export audio error:", err);

@@ -121,6 +121,7 @@ export default function AssetsTabView({
   handleGenerateScript,
   setIsRssBasedGeneration,
   setMissionStudioSubTab,
+  getFullBriefing,
   activeSubTab,
   preferences,
   updatePreferences,
@@ -658,6 +659,7 @@ export default function AssetsTabView({
                           uiLanguage={uiLanguage}
                           deleteOneBriefing={deleteOneBriefing}
                           archiveBriefing={archiveBriefing}
+                          getFullBriefing={getFullBriefing}
                           handleApplyIntelligenceBriefing={(b) => {
                             handleApplyIntelligenceBriefing(b);
                             setActiveTab("mission_studio");
