@@ -77,6 +77,16 @@ export interface SavedSummary {
   likeCount?: number;
   shareCount?: number;
   artworkUrl?: string;
+  isArchived?: boolean; // Added in 1.1
+}
+
+export type SavePolicy = "manual" | "auto";
+export interface SaveState {
+  isSaving: boolean;
+  saveProgress: number; // 0-100
+  lastSavedAt: string | null;
+  hasChanges: boolean;
+  isConflict: boolean;
 }
 
 export interface VoiceHistoryItem {

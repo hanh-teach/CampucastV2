@@ -122,6 +122,23 @@ export function useBriefcase() {
     }
   }, []);
 
+  const archiveBriefing = useCallback(async (id: string, archive: boolean) => {
+    try {
+      const { archiveMission } = await import("../services/libraryService");
+      const item = briefings.find(b => b.id === id);
+      if (!item) return false;
+      const res = await archiveMission(item, archive);
+      if (res.success) {
+        await refreshBriefings(false);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("Failed to archive briefing:", err);
+      return false;
+    }
+  }, [briefings, refreshBriefings]);
+
   return {
     briefings,
     loading,
@@ -130,6 +147,7 @@ export function useBriefcase() {
     isDBSupported,
     saveNewBriefing,
     deleteOneBriefing,
+    archiveBriefing,
     clearAllBriefings,
     clearAllLocalDataComprehensive: clearAllLocalDataComprehensiveWrapped,
     getFullBriefing,

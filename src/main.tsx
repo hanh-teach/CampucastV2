@@ -7,6 +7,23 @@ import { UserPreferencesProvider } from './components/UserPreferencesProvider.ts
 import { ThemeProvider } from './components/ThemeProvider.tsx';
 import { AdaptiveProvider } from './layouts/AdaptiveContext.tsx';
 
+// Suppress benign WebSocket/HMR errors in sandboxed dev environment
+if (typeof window !== "undefined") {
+  const handleBenignErrors = (event: ErrorEvent | PromiseRejectionEvent) => {
+    const message = "reason" in event 
+      ? String(event.reason?.message || event.reason)
+      : String(event.message || event.error?.message);
+      
+    if (message.includes("WebSocket") || message.includes("websocket")) {
+      event.preventDefault();
+      return true;
+    }
+  };
+
+  window.addEventListener("unhandledrejection", handleBenignErrors);
+  window.addEventListener("error", handleBenignErrors);
+}
+
 // Đăng ký Service Worker cho PWA chế độ offline
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

@@ -3,6 +3,7 @@ import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { Card } from "../ui/Card";
 import { cn } from "../../lib/utils";
+import { BriefingItem } from "./BriefingItem";
 import RSSManager from "../RSSManager";
 import PodcastManager from "../PodcastManager";
 import { getApiUrl } from "../../utils/apiUtils";
@@ -38,12 +39,26 @@ import {
   Clock,
   Edit3,
   Copy,
-  Archive as ArchiveIcon
+  Archive as ArchiveIcon,
+  AlertCircle
 } from "lucide-react";
 import { SavedSummary, PublishedEpisode, TabType, LanguageMode, BroadcastConfiguration } from "../../types";
 import { PageTemplate } from "../../foundation/PageTemplate";
 import { AdaptiveWorkspace } from "../../foundation/AdaptiveWorkspace";
 import { colors } from "../../foundation/tokens/colors";
+
+// Simple Toast Component logic inside AssetsTabView
+const Toast = ({ message, type }: { message: string, type: 'success' | 'error' | 'loading' }) => (
+  <div className={cn(
+    "fixed bottom-6 right-6 px-4 py-3 rounded-xl flex items-center gap-3 shadow-2xl z-50 animate-in slide-in-from-bottom-4",
+    type === 'success' ? 'bg-[var(--color-success)] text-white' : 
+    type === 'error' ? 'bg-[var(--color-critical)] text-white' : 'bg-surface-bg border border-border-subtle'
+  )}>
+    {type === 'success' && <CheckCircle className="w-4 h-4" />}
+    {type === 'error' && <AlertCircle className="w-4 h-4" />}
+    <span className="text-xs font-black uppercase tracking-widest">{message}</span>
+  </div>
+);
 
 interface AssetsWorkspaceProps {
   uiLanguage: "vi" | "en";
@@ -61,6 +76,7 @@ interface AssetsWorkspaceProps {
   storageUsage?: string | { usedMB: number; totalMB?: number };
   clearAllBriefings: () => Promise<any>;
   deleteOneBriefing: (id: string) => Promise<any>;
+  archiveBriefing?: (id: string, archive: boolean) => Promise<any>;
   refreshBriefings: (v: boolean) => Promise<any>;
   handleApplyIntelligenceBriefing: (briefing: SavedSummary) => void;
   onPlayBriefing: (briefing: SavedSummary | any) => void;
@@ -96,6 +112,7 @@ export default function AssetsTabView({
   storageUsage = { usedMB: 14.2, totalMB: 512 },
   clearAllBriefings,
   deleteOneBriefing,
+  archiveBriefing,
   refreshBriefings,
   handleApplyIntelligenceBriefing,
   onPlayBriefing,
@@ -127,6 +144,12 @@ export default function AssetsTabView({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [expandedScriptId, setExpandedScriptId] = useState<string | null>(null);
   const [copiedScriptId, setCopiedScriptId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'loading' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'loading') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const handleCopyScript = (brief: SavedSummary) => {
     const fullText = [
@@ -257,11 +280,14 @@ export default function AssetsTabView({
   const selectedBriefing = savedBriefings.find(b => b.id === selectedBriefingId) || savedBriefings[0];
 
   const filteredBriefings = savedBriefings.filter(b => {
+    if (b.isArchived) return false;
     const title = b.payload?.title || "";
     const intro = b.payload?.introduction || "";
     const query = searchQuery.toLowerCase();
     return title.toLowerCase().includes(query) || intro.toLowerCase().includes(query);
   });
+
+  const archivedBriefings = savedBriefings.filter(b => b.isArchived && (b.payload?.title?.toLowerCase().includes(searchQuery.toLowerCase()) || b.payload?.introduction?.toLowerCase().includes(searchQuery.toLowerCase())));
 
   const filteredEpisodes = podcastEpisodes.filter(ep => {
     const title = ep.title || "";
@@ -271,6 +297,7 @@ export default function AssetsTabView({
   });
 
   return (
+    <>
     <PageTemplate
       id="assets-workspace-root"
       className="h-[calc(100vh-68px)] bg-surface-bg text-left flex flex-col"
@@ -334,92 +361,26 @@ export default function AssetsTabView({
               {activeCategory === "missions" && (
                 filteredBriefings.length > 0 ? (
                   filteredBriefings.map((brief) => (
-                    <Card
+                    <BriefingItem
                       key={brief.id}
-                      onClick={() => setSelectedBriefingId(brief.id)}
-                      className={cn(
-                        "p-6 transition-all cursor-pointer flex flex-col justify-between items-center group",
-                        selectedBriefingId === brief.id 
-                          ? "border-2 border-brand-accent bg-brand-accent/[0.02]" 
-                          : "border border-border-subtle hover:border-text-muted/20 bg-surface-subtle/20"
-                      )}
-                    >
-                      <div className="w-full space-y-4">
-                        <div className="flex justify-between items-start">
-                          <div className="space-y-2 text-left min-w-0 flex-1 pr-6">
-                            <div className="flex items-center gap-3">
-                               <div className="w-8 h-8 rounded-lg bg-surface-bg flex items-center justify-center border border-border-subtle group-hover:scale-110 transition-transform overflow-hidden" style={{ color: colors.interactive }}>
-                                  {brief.artworkUrl ? (
-                                    <img src={brief.artworkUrl} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
-                                  ) : (
-                                    <Layers className="w-4 h-4" />
-                                  )}
-                               </div>
-                               <h4 className="font-black text-base text-text-main truncate tracking-tight">{brief.payload.title}</h4>
-                            </div>
-                            <div className="flex items-center gap-4 text-[10px] text-text-muted font-black uppercase tracking-widest opacity-60">
-                              <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {brief.timestamp}</span>
-                              <span className="flex items-center gap-1"><FileText className="w-3 h-3" /> {brief.payload.chapters.length} Chapters</span>
-                              <span className="px-2 py-0.5 rounded bg-surface-bg border border-border-subtle text-[8px]">{brief.preferences?.languageMode || "BILINGUAL"}</span>
-                            </div>
-                          </div>
-                             
-                          <div className="flex items-center gap-3">
-                            <Button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onPlayBriefing(brief);
-                              }}
-                              className="font-black text-[10px] uppercase tracking-widest h-10 px-4 rounded-xl flex items-center gap-2 hover:bg-brand-accent hover:text-on-accent transition-all"
-                              style={{ backgroundColor: colors.textPrimary, color: colors.surface }}
-                            >
-                              {isPlayerPlaying && selectedBriefId === brief.id ? (
-                                <Pause className="w-3 h-3 fill-current" />
-                              ) : (
-                                <Play className="w-3 h-3 fill-current" />
-                              )}
-                              <span>{selectedBriefId === brief.id ? (isPlayerPlaying ? (uiLanguage === "vi" ? "Tạm dừng" : "Pause") : (uiLanguage === "vi" ? "Tiếp tục" : "Resume")) : (uiLanguage === "vi" ? "Phát" : "Play")}</span>
-                            </Button>
-                          </div>
-                        </div>
-
-                        {selectedBriefingId === brief.id && (
-                          <div className="flex items-center gap-2 pt-4 border-t border-border-subtle/50 overflow-x-auto custom-scrollbar pb-1">
-                            {/* Actions Sequence */}
-                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleApplyIntelligenceBriefing(brief); }} className="h-8 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest text-text-muted hover:text-brand-accent hover:bg-brand-accent/10">
-                              <Edit3 className="w-3 h-3 mr-1.5" /> Edit
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); }} className="h-8 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest text-text-muted hover:text-brand-accent hover:bg-brand-accent/10">
-                              <Save className="w-3 h-3 mr-1.5" /> Save
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); }} className="h-8 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest text-text-muted hover:text-brand-accent hover:bg-brand-accent/10">
-                              <Copy className="w-3 h-3 mr-1.5" /> Duplicate
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); }} className="h-8 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest text-text-muted hover:text-brand-accent hover:bg-brand-accent/10">
-                              <Share2 className="w-3 h-3 mr-1.5" /> Share
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); window.open(getApiUrl(`/api/audio/download/${brief.id}`), '_blank'); }} className="h-8 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest text-text-muted hover:text-brand-accent hover:bg-brand-accent/10">
-                              <Download className="w-3 h-3 mr-1.5" /> Export
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); }} className="h-8 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest text-text-muted hover:text-brand-accent hover:bg-brand-accent/10">
-                              <ArchiveIcon className="w-3 h-3 mr-1.5" /> Archive
-                            </Button>
-                            <div className="flex-1" />
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (confirm(t.deleteConfirm)) {
-                                  deleteOneBriefing(brief.id).then(() => handleRefresh());
-                                }
-                              }}
-                              className="p-2 flex items-center gap-2 hover:bg-[var(--color-critical)]/10 text-text-muted hover:text-[var(--color-critical)] rounded-lg transition-colors border border-transparent hover:border-[var(--color-critical)]/20 text-[10px] font-black uppercase tracking-widest"
-                            >
-                              <Trash2 className="w-3 h-3" /> Delete
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </Card>
+                      brief={brief}
+                      isSelected={selectedBriefingId === brief.id}
+                      onSelect={setSelectedBriefingId}
+                      onPlay={onPlayBriefing}
+                      isPlayerPlaying={isPlayerPlaying && selectedBriefId === brief.id}
+                      uiLanguage={uiLanguage}
+                      deleteOneBriefing={deleteOneBriefing}
+                      archiveBriefing={archiveBriefing}
+                      handleApplyIntelligenceBriefing={(b) => {
+                        handleApplyIntelligenceBriefing(b);
+                        setActiveTab("mission_studio");
+                        if (setMissionStudioSubTab) {
+                          setMissionStudioSubTab("editor");
+                        }
+                      }}
+                      handleRefresh={handleRefresh}
+                      showToast={showToast}
+                    />
                   ))
                 ) : (
                   <div className="py-20 text-center space-y-4">
@@ -428,8 +389,7 @@ export default function AssetsTabView({
                     </div>
                     <p className="text-sm font-black text-text-muted uppercase tracking-widest">{t.noMissions}</p>
                   </div>
-                )
-              )}
+              ))}
 
               {activeCategory === "scripts" && (
                 filteredBriefings.length > 0 ? (
@@ -593,9 +553,20 @@ export default function AssetsTabView({
                             )}
                             {selectedBriefId === brief.id ? (isPlayerPlaying ? (uiLanguage === "vi" ? "Tạm dừng" : "Pause") : (uiLanguage === "vi" ? "Tiếp tục" : "Resume")) : (uiLanguage === "vi" ? "Phát" : "Play")}
                          </Button>
-                         <Button variant="outline" size="sm" className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest border-border-subtle text-text-muted hover:text-brand-accent" onClick={() => {
-                           const audioUrl = getApiUrl(`/api/audio/download/${brief.id}`);
-                           window.open(audioUrl, '_blank');
+                         <Button variant="outline" size="sm" className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest border-border-subtle text-text-muted hover:text-brand-accent" onClick={async () => {
+                           if (!brief.audioChunks || brief.audioChunks.length === 0) {
+                             showToast(uiLanguage === "vi" ? "Chưa có audio để tải." : "No audio available to download.", "error");
+                             return;
+                           }
+                           try {
+                             showToast(uiLanguage === "vi" ? "Đang chuẩn bị file WAV..." : "Preparing WAV file...", "loading");
+                             const { exportBriefingAsWav } = await import("../../utils/audioExport");
+                             await exportBriefingAsWav(brief.audioChunks, brief.payload?.title || "Briefing");
+                             showToast(uiLanguage === "vi" ? "Đã tải xuống thành công" : "Downloaded successfully", "success");
+                           } catch (err) {
+                             console.error("Export audio error:", err);
+                             showToast(uiLanguage === "vi" ? "Lỗi tải xuống" : "Failed to download audio", "error");
+                           }
                          }}>
                             <Download className="w-3 h-3 mr-2" /> {uiLanguage === "vi" ? "Xuất" : "Export"}
                          </Button>
@@ -670,6 +641,36 @@ export default function AssetsTabView({
 
               {activeCategory === "archive" && (
                 <div className="space-y-6">
+                  {archivedBriefings.length > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-black tracking-widest text-text-main flex items-center gap-2">
+                        <ArchiveIcon className="w-4 h-4 text-brand-accent" /> 
+                        {uiLanguage === "vi" ? "Nhiệm vụ đã lưu trữ" : "Archived Missions"}
+                      </h3>
+                      {archivedBriefings.map((brief) => (
+                        <BriefingItem
+                          key={brief.id}
+                          brief={brief}
+                          isSelected={selectedBriefingId === brief.id}
+                          onSelect={setSelectedBriefingId}
+                          onPlay={onPlayBriefing}
+                          isPlayerPlaying={isPlayerPlaying && selectedBriefId === brief.id}
+                          uiLanguage={uiLanguage}
+                          deleteOneBriefing={deleteOneBriefing}
+                          archiveBriefing={archiveBriefing}
+                          handleApplyIntelligenceBriefing={(b) => {
+                            handleApplyIntelligenceBriefing(b);
+                            setActiveTab("mission_studio");
+                            if (setMissionStudioSubTab) {
+                              setMissionStudioSubTab("editor");
+                            }
+                          }}
+                          handleRefresh={handleRefresh}
+                          showToast={showToast}
+                        />
+                      ))}
+                    </div>
+                  )}
                   <PodcastManager
                     savedBriefings={savedBriefings}
                     podcastEpisodes={podcastEpisodes}
@@ -700,6 +701,8 @@ export default function AssetsTabView({
         </div>
       </AdaptiveWorkspace>
     </PageTemplate>
+    {toast && <Toast message={toast.message} type={toast.type} />}
+    </>
   );
 }
 

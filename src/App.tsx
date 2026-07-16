@@ -209,6 +209,7 @@ export default function App() {
     briefings: savedBriefings,
     saveNewBriefing,
     deleteOneBriefing,
+    archiveBriefing,
     getFullBriefing,
     storageUsage,
     clearAllBriefings,
@@ -1053,6 +1054,7 @@ const handleApplyPreset = (index: number) => {
                storageUsage={storageUsage}
                clearAllBriefings={clearAllBriefings}
                deleteOneBriefing={(id) => deleteOneBriefing(id).then(() => refreshBriefings(false))}
+               archiveBriefing={(id, archive) => archiveBriefing(id, archive).then(() => refreshBriefings(false))}
                refreshBriefings={refreshBriefings}
                handleApplyIntelligenceBriefing={handleApplyIntelligenceBriefing}
                preferences={preferences}

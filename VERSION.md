@@ -1,5 +1,36 @@
 # CommuteCast Version History
 
+## 7.40.2-Stable (2026-07-15)
+- **Status**: Production Stable — completed Sprint 2: Production SAVE Pipeline.
+- **Sprint**: Production SAVE Pipeline (Sprint 2)
+- **Major Capability**:
+  - **useLibrarySave Hook**: A specialized persistence controller for the Media Library featuring dual-mode manual and debounced auto-save support.
+  - **Transactional Integrity**: Implemented "Snapshot & Restore" rollback logic ensuring that failed persistence attempts automatically revert the client-side state to the last known good version.
+  - **Dirty State Intelligence**: Zero-write policy detection that prevents unnecessary network traffic and database operations when no properties have been modified.
+  - **Optimistic Concurrency**: UI state updates immediately upon save initiation with background asynchronous commitment, providing a lag-free operator experience.
+  - **Modular UI Componentry**: Extracted and hardened `BriefingItem` as an independent unit, optimizing re-render performance and decoupling item logic from the Assets Tab container.
+  - **Interactive Workspace Notifications**: Integrated a high-performance toast notification system into the Assets Tab workstation to provide real-time feedback for saving, conflicts, and operation results.
+
+## 7.40.1-Stable (2026-07-15)
+- **Status**: Production Stable — completed Sprint 1.1: Library Service Architecture Hardening.
+- **Sprint**: Library Service Architecture Hardening (Sprint 1.1)
+- **Major Capability**:
+  - **LibraryOperationResult & LibraryError**: Established a unified operational response envelope pattern returning high-fidelity status wrappers and custom error codes.
+  - **Robust Soft Deletion**: Redesigned `deleteMission()` to default to secure Soft Delete (attaching `isDeleted` and `deletedAt` flags for simple UI restoration options) while maintaining GDPR/Storage-hygiene Hard Delete.
+  - **Comprehensive Archive Meta**: Integrated `archivedAt`, `archivedBy`, and `archiveReason` details inside the `archiveMission()` transaction.
+  - **Pristine Analytics Reset**: Hardened `duplicateMission()` to systematically purge and reset all runtime telemetry fields, download stats, liking metrics, share URLs, and historical play properties.
+  - **Proper DOCX XML Engine**: Installed and incorporated the official `docx` package to generate fully structured Word documents (.docx) compliant with native XML office standards.
+  - **Full Unit Test Suite**: Created a robust JSDOM unit test suite covering `saveMission`, `duplicateMission`, `archiveMission`, and `deleteMission`.
+
+## 7.40.0-Stable (2026-07-15)
+- **Status**: Production Stable — completed Sprint 1: LibraryService core interface and helper engine.
+- **Sprint**: Library Service Architecture & Multi-Format Export Suite
+- **Major Capability**:
+  - **LibraryService Core**: Fully-typed operations in `src/services/libraryService.ts` for SavedSummaries (briefings) and V4 Missions.
+  - **Robust Duplicator**: Unique ID/UUID suffix generations and deep title duplication copies preventing collisions.
+  - **Multi-Format Export Suite**: Native file download engines supporting JSON, Markdown, raw TXT, Microsoft Word compatible DOC, Narrator Script, and on-the-fly zip assemblies using `JSZip`.
+  - **Unified Sharing Controller**: Connects with Supabase-backed proxy sharing schemas or gracefully degrades to localized offline sharing links.
+
 ## 7.39.4-Stable (2026-07-15)
 - **Status**: Production Stable — fully resolved white screen crash and infinite re-render loops on Library/Archive.
 - **Sprint**: Media Library Stabilization & Render Resiliency (Bug Fix)

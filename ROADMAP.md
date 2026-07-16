@@ -39,6 +39,15 @@
   - Deliverables: `OPERATOR_INTENT_MODEL.md`, `PREFERENCE_TREE.md`, `SETTINGS_DECISION_FLOW.md`.
 
 ### 🚀 Release Milestones [PHASE B]
+- **Sprint LIB-101: Media Library Service Layer (Sprint 1) [COMPLETED]** ✅
+  - Goal: Formulate a cohesive and robust service model for the Library Workspace to manage all CRUD, archiving, sharing, and multi-format exports.
+  - Deliverables: Core business logic implemented inside `src/services/libraryService.ts` with complete integration of JSON, Markdown, DOCX, Script, MP3, and dynamic ZIP bundles via `JSZip` exports.
+- **Sprint LIB-102: Production SAVE Pipeline (Sprint 2) [COMPLETED]** ✅
+  - Goal: Implement a robust, high-performance saving architecture for the Media Library with dirty state detection, optimistic updates, transaction rollbacks, and interactive toast feedback.
+  - Deliverables: Specialized `useLibrarySave` hook, modular `BriefingItem` component, debounced auto-save policy, and a comprehensive Vitest suite verifying persistence integrity and conflict handling.
+- **Sprint LIB-101.1: Media Library Service Hardening (Sprint 1.1) [COMPLETED]** ✅
+  - Goal: Harden the Media Library Service with custom typed error envelopes, transactional soft deletion models, comprehensive archiving telemetry, deep clean metadata purges on duplication, and fully compliant standard XML DOCX file generators.
+  - Deliverables: Custom error boundaries (`LibraryError`), standardised response types (`LibraryOperationResult`), custom `docx` office XML compiler, robust soft deletion and rollback mechanisms, and comprehensive unit tests inside `tests/libraryService.test.ts`.
 - **Sprint STR-114: Cloud Storage Resilience & Cold-Start Polish [COMPLETED]** ✅
   - Goal: Standardize cloud storage initialization logging and implement connection-aware failover mechanisms.
   - Deliverables: Refactored `/api/podcasts` metadata loader with positive status markers, silent offline failover to local JSON database, and clean handling of first-run empty-bucket states.

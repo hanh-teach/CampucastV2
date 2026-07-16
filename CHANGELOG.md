@@ -1,3 +1,34 @@
+## [7.40.2-Stable] - 2026-07-15
+### Added
+- **Production SAVE Pipeline (Sprint 2)**:
+  - Developed a specialized `useLibrarySave` hook with dirty state detection, optimistic updates, and transaction rollback support.
+  - Implemented debounced auto-save policy support (2000ms) with manual override.
+  - Extracted `BriefingItem` as a standalone modular component to improve maintainability and performance.
+  - Integrated high-performance toast notifications into the Assets Tab workspace for real-time operation feedback.
+  - Engineered a comprehensive unit and integration test suite (`tests/librarySavePipeline.test.ts`) covering success, failure, rollback, and concurrency edge cases.
+  - Verified 100% linter and build compliance for the new save architecture.
+
+## [7.40.1-Stable] - 2026-07-15
+### Added
+- **Library Service Architecture Hardening (Sprint 1.1)**:
+  - Created standard `LibraryOperationResult<T>` and `LibraryError` to wrap all operations.
+  - Upgraded `deleteMission()` to default to secure Soft Delete with `isDeleted` and `deletedAt` metadata while leaving GDPR Hard Delete as an option.
+  - Expanded `archiveMission()` to capture `archivedAt`, `archivedBy`, and `archiveReason`.
+  - Upgraded `duplicateMission()` to perform a deep purge of telemetry fields (likeCount, shareCount, statistics, history, shareLink, downloadCount, lastPlayed, and timestamps).
+  - Replaced the previous DOCX template stub with a proper XML-compliant Microsoft Word document exporter using the `docx` package.
+  - Authored a fully mock-isolated JSDOM test suite inside `tests/libraryService.test.ts`.
+
+## [7.40.0-Stable] - 2026-07-15
+### Added
+- **Library Service Architecture (Sprint 1)**:
+  - Created a robust, fully-typed `LibraryService` in `src/services/libraryService.ts` to manage operations on assets (SavedSummaries and V4 Missions) without mutating existing UI structures.
+  - Implemented `saveMission` for persistence with proper dirty-state/timestamp structures.
+  - Implemented `duplicateMission` to clone briefing and mission objects safely with UUID/ID-recreation without collisions.
+  - Implemented `archiveMission` to support transient toggles (`isArchived` flag) for local archiving and unarchiving.
+  - Implemented `deleteMission` supporting multi-store purge operations (clearing both briefings and V4 missions robustly).
+  - Implemented `shareMission` leveraging existing `saveSharedBriefing` for server-side link registration with fully offline-safe client fallbacks.
+  - Implemented `exportMission` providing a multi-format suite (JSON, Markdown, TXT, teleprompter-style Script, audio link downloads, and complete ZIP packages compiled on-the-fly using `JSZip`).
+
 ## [7.39.4-Stable] - 2026-07-15
 ### Fixed
 - **Infinite Render Loop Elimination on Library/Archive view**:

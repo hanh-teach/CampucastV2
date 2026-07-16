@@ -120,6 +120,7 @@ Every architecture module is strictly mapped to actual production codebase files
 | **RSS Service** | `src/services/rssService.ts` | `find src/services/ -name "rssService.ts"` |
 | **Telemetry Service** | `src/services/telemetryService.ts` | `find src/services/ -name "telemetryService.ts"` |
 | **Speech Engine Utility** | `src/services/broadcastSpeechEngine.ts` | `find src/services/ -name "broadcastSpeechEngine.ts"` |
+| **Library Service** | `src/services/libraryService.ts` | `find src/services/ -name "libraryService.ts"` |
 | **Briefing generation orchestrator** | `src/hooks/useBriefingGeneration.ts` | `find src/hooks/ -name "useBriefingGeneration.ts"` |
 | **Shared Application State types** | `src/types.ts` | `find src/ -name "types.ts"` |
 | **Active Playback State enumeration** | `src/types.ts` | `grep -rn "ExecutionState" src/types.ts` |
