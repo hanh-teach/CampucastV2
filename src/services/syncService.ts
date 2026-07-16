@@ -147,7 +147,7 @@ export async function uploadAudioToSupabaseStorage(
     const blobs = audioChunks.map(chunk => base64ToBlob(chunk));
     const combinedBlob = new Blob(blobs, { type: "audio/mpeg" });
     const fileName = `${userId}/${briefingId}.mp3`;
-    const bucketName = "audio-briefings";
+    const bucketName = "CampucasV2_audio";
 
     // Thực hiện tải lên
     let { error } = await supabase.storage
@@ -158,25 +158,8 @@ export async function uploadAudioToSupabaseStorage(
       });
 
     if (error) {
-      // Nếu bucket chưa tồn tại, thử tạo bucket mới và upload lại
-      if (error.message?.includes("bucket") || (error as any).status === 404) {
-        console.warn(`[Storage] Bucket '${bucketName}' does not exist. Initializing...`);
-        try {
-          await supabase.storage.createBucket(bucketName, { public: true });
-          const retryRes = await supabase.storage
-            .from(bucketName)
-            .upload(fileName, combinedBlob, {
-              contentType: "audio/mpeg",
-              upsert: true
-            });
-          if (retryRes.error) throw retryRes.error;
-        } catch (createErr) {
-          console.error("[Storage] Failed to create bucket or retry upload:", createErr);
-          return null;
-        }
-      } else {
-        throw error;
-      }
+      console.error("[Storage] Failed to upload audio to Supabase. Ensure bucket 'CampucasV2_audio' exists and RLS policies allow inserts.", error);
+      return null;
     }
 
     // Lấy liên kết tải xuống công khai

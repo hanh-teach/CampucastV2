@@ -92,6 +92,7 @@ interface AssetsWorkspaceProps {
   setNewsContent?: (content: string | ((prev: string) => string)) => void;
   loadPodcastEpisodes?: () => Promise<any>;
   isGenerating?: boolean;
+  getFullBriefing?: (id: string) => Promise<SavedSummary | null>;
 }
 
 type ActiveCategory = "missions" | "scripts" | "audio" | "sources" | "templates" | "archive";
