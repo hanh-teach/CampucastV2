@@ -115,6 +115,7 @@
   --color-surface-subtle: var(--color-bg-subtle);
   --color-surface-elevated: var(--color-surface);
   --color-surface-card: var(--color-surface-elevated);
+  --color-card-bg: var(--color-surface-elevated);
   
   --color-border-primary: var(--color-border-default);
   --color-border-subtle: var(--color-border-subtle);
