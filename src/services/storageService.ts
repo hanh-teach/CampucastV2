@@ -147,7 +147,11 @@ export function normalizeBriefing(item: any): SavedSummary {
     },
     audioChunks: Array.isArray(audioChunks) ? audioChunks.map(String) : [],
     likeCount: typeof item.likeCount === "number" ? item.likeCount : 0,
-    shareCount: typeof item.shareCount === "number" ? item.shareCount : 0
+    shareCount: typeof item.shareCount === "number" ? item.shareCount : 0,
+    ...(item.isArchived !== undefined && { isArchived: item.isArchived }),
+    ...(item.archivedAt !== undefined && { archivedAt: item.archivedAt }),
+    ...(item.archivedBy !== undefined && { archivedBy: item.archivedBy }),
+    ...(item.archiveReason !== undefined && { archiveReason: item.archiveReason })
   };
 }
 

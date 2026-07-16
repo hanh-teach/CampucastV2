@@ -1054,7 +1054,7 @@ const handleApplyPreset = (index: number) => {
                storageUsage={storageUsage}
                clearAllBriefings={clearAllBriefings}
                deleteOneBriefing={(id) => deleteOneBriefing(id).then(() => refreshBriefings(false))}
-               archiveBriefing={(id, archive) => archiveBriefing(id, archive).then(() => refreshBriefings(false))}
+               archiveBriefing={archiveBriefing}
                getFullBriefing={getFullBriefing}
                refreshBriefings={refreshBriefings}
                handleApplyIntelligenceBriefing={handleApplyIntelligenceBriefing}
