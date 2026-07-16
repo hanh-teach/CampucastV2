@@ -416,13 +416,7 @@ const requestNotificationPermission = async () => {
 
 
 
-  // Sync uiLanguage state with preferences.language
-  useEffect(() => {
-    if (preferences.language === "vi" || preferences.language === "en") {
-      setUiLanguage(preferences.language);
-    }
-  }, [preferences.language]);
-
+  // Synchronize UI Language setting and cache language state securely
   const handleSetUiLanguage = (lang: "vi" | "en") => {
     setUiLanguage(lang);
     localStorage.setItem("commutecast_ui_language", lang);
@@ -766,10 +760,10 @@ const handleApplyPreset = (index: number) => {
 
     // 3. Match AI Host Personas
     const personas = [
-      { id: "fenrir", category: "persona", titleVi: "Giọng đọc Fenrir (Nam ấm áp)", titleEn: "Fenrir Voice (Warm Male)", descVi: "Người dẫn tự sự, chín chắn và tin cậy", descEn: "Calm, mature, and deeply narrative", action: () => { updatePreferences({ voicePersona: "Fenrir" }); setActiveTab("ai_center"); setAiCenterSubTab("voice"); setShowSearchModal(false); } },
-      { id: "zephyr", category: "persona", titleVi: "Giọng đọc Zephyr (Nữ sôi nổi)", titleEn: "Zephyr Voice (Energetic Female)", descVi: "Phong cách Morning DJ đầy nhiệt lượng", descEn: "High-energy morning show enthusiast", action: () => { updatePreferences({ voicePersona: "Zephyr" }); setActiveTab("ai_center"); setAiCenterSubTab("voice"); setShowSearchModal(false); } },
-      { id: "kore", category: "persona", titleVi: "Giọng đọc Kore (Nữ truyền cảm)", titleEn: "Kore Voice (Expressive Female)", descVi: "Người đọc sâu lắng, truyền thống và trang trọng", descEn: "Traditional, eloquent, and deeply emotional", action: () => { updatePreferences({ voicePersona: "Kore" }); setActiveTab("ai_center"); setAiCenterSubTab("voice"); setShowSearchModal(false); } },
-      { id: "puck", category: "persona", titleVi: "Giọng đọc Puck (Hóm hỉnh vui vẻ)", titleEn: "Puck Voice (Witty & Playful)", descVi: "Dẫn tin hài hước, dí dỏm và linh hoạt", descEn: "Quick-witted, humorous, and entertaining", action: () => { updatePreferences({ voicePersona: "Puck" }); setActiveTab("ai_center"); setAiCenterSubTab("voice"); setShowSearchModal(false); } },
+      { id: "fenrir", category: "persona", titleVi: "Giọng đọc Fenrir (Nam ấm áp)", titleEn: "Fenrir Voice (Warm Male)", descVi: "Người dẫn tự sự, chín chắn và tin cậy", descEn: "Calm, mature, and deeply narrative", action: () => { updatePreferences({ voice: "Fenrir" }); setActiveTab("ai_center"); setAiCenterSubTab("voice"); setShowSearchModal(false); } },
+      { id: "zephyr", category: "persona", titleVi: "Giọng đọc Zephyr (Nữ sôi nổi)", titleEn: "Zephyr Voice (Energetic Female)", descVi: "Phong cách Morning DJ đầy nhiệt lượng", descEn: "High-energy morning show enthusiast", action: () => { updatePreferences({ voice: "Zephyr" }); setActiveTab("ai_center"); setAiCenterSubTab("voice"); setShowSearchModal(false); } },
+      { id: "kore", category: "persona", titleVi: "Giọng đọc Kore (Nữ truyền cảm)", titleEn: "Kore Voice (Expressive Female)", descVi: "Người đọc sâu lắng, truyền thống và trang trọng", descEn: "Traditional, eloquent, and deeply emotional", action: () => { updatePreferences({ voice: "Kore" }); setActiveTab("ai_center"); setAiCenterSubTab("voice"); setShowSearchModal(false); } },
+      { id: "puck", category: "persona", titleVi: "Giọng đọc Puck (Hóm hỉnh vui vẻ)", titleEn: "Puck Voice (Witty & Playful)", descVi: "Dẫn tin hài hước, dí dỏm và linh hoạt", descEn: "Quick-witted, humorous, and entertaining", action: () => { updatePreferences({ voice: "Puck" }); setActiveTab("ai_center"); setAiCenterSubTab("voice"); setShowSearchModal(false); } },
     ];
     personas.forEach(p => {
       if (p.titleVi.toLowerCase().includes(query) || p.titleEn.toLowerCase().includes(query) || p.descVi.toLowerCase().includes(query) || p.descEn.toLowerCase().includes(query)) {
