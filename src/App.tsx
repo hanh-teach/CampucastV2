@@ -839,6 +839,7 @@ const handleApplyPreset = (index: number) => {
         activeTab={activeTab}
         activeBriefingTitle={activeTitle}
         onSearchClick={() => setShowSearchModal(true)}
+        onDrivingModeToggle={toggleDrivingMode}
         onNotificationClick={() => requestNotificationPermission()}
         onProfileClick={() => {
           if (user) {

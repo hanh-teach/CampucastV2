@@ -1,6 +1,7 @@
 import React from "react";
 import { 
-  Bell, 
+  Bell,
+  Car, 
   Search, 
   Menu, 
   User, 
@@ -23,6 +24,7 @@ interface HeaderProps {
   activeTab: string;
   activeBriefingTitle?: string | null;
   onSearchClick: () => void;
+  onDrivingModeToggle?: () => void;
   onNotificationClick: () => void;
   onProfileClick: () => void;
   onAssistantToggle: () => void;
@@ -39,6 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
   activeTab,
   activeBriefingTitle,
   onSearchClick,
+  onDrivingModeToggle,
   onNotificationClick,
   onProfileClick,
   onAssistantToggle,
@@ -125,6 +128,13 @@ export const Header: React.FC<HeaderProps> = ({
               title="Search (Ctrl+K)"
             >
               <Search className="w-4.5 h-4.5 group-hover:scale-110 transition-transform" />
+            </button>
+            <button 
+              onClick={onDrivingModeToggle}
+              className="p-2.5 text-text-muted hover:bg-surface-subtle hover:text-text-main rounded-xl transition-all group"
+              title={uiLanguage === "vi" ? "Bật HUD Lái Xe" : "Enable Driving HUD"}
+            >
+              <Car className="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform" />
             </button>
 
             <button 
