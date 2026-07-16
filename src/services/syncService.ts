@@ -506,7 +506,7 @@ export async function performFullSyncAsync(): Promise<boolean> {
       
       // Áp dụng Delta Sync: chỉ tải các bản ghi thay đổi từ sau mốc lastSyncAt bằng cột timestamp
       if (lastSyncAt) {
-        voiceQuery = voiceQuery.gt("timestamp", lastSyncAt);
+        voiceQuery = voiceQuery.gt("created_at", lastSyncAt);
       }
       const { data: cloudVoice, error: voiceErr } = await voiceQuery;
 
