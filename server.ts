@@ -1149,10 +1149,43 @@ async function serveApp() {
             callbacks: {
               onmessage: (message: LiveServerMessage) => {
                 resetTimeout(); // Activity detected
-                const audio = message.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
-                if (audio) clientWs.send(JSON.stringify({ audio }));
-                if (message.serverContent?.interrupted)
-                  clientWs.send(JSON.stringify({ interrupted: true }));
+                const msg = message as any;
+
+                // 1. Error Handling
+                if (msg.error) {
+                  clientWs.send(JSON.stringify({ type: "gemini_error", error: msg.error }));
+                  return;
+                }
+
+                // 2. Audio/Text Relay
+                const turn = (msg.serverContent as any)?.modelTurn;
+                if (turn) {
+                  turn.parts.forEach((part: any) => {
+                    // Audio
+                    if (part.inlineData) {
+                      const audio = part.inlineData.data;
+                      if (audio) {
+                        if (clientWs.bufferedAmount < 1024 * 512) { // Backpressure check
+                          clientWs.send(JSON.stringify({ type: "gemini_chunk", audio }));
+                        }
+                      }
+                    }
+                    // Text
+                    if (part.text) {
+                      if (clientWs.bufferedAmount < 1024 * 512) { // Backpressure check
+                        clientWs.send(JSON.stringify({ type: "gemini_chunk", text: part.text }));
+                      }
+                    }
+                  });
+                }
+                
+                // 3. Completion check
+                if ((msg.serverContent as any)?.turnComplete) {
+                   clientWs.send(JSON.stringify({ type: "gemini_done" }));
+                }
+
+                if ((msg.serverContent as any)?.interrupted)
+                  clientWs.send(JSON.stringify({ type: "interrupted" }));
               },
             },
             config: {
@@ -1165,14 +1198,37 @@ async function serveApp() {
             },
           });
         
-        clientWs.on('message', (data) => {
+        clientWs.on('message', (data, isBinary) => {
           resetTimeout(); // Activity detected
           try {
-            const { audio } = JSON.parse(data.toString());
-            if (audio && session) {
+            if (isBinary || Buffer.isBuffer(data)) {
+              // Convert binary PCM (Buffer/Uint8Array) directly to Base64 for Gemini Live API
+              const base64Audio = Buffer.from(data as any).toString('base64');
+              if (session) {
                 session.sendRealtimeInput({
-                  audio: { data: audio, mimeType: "audio/pcm;rate=16000" },
+                  audio: { data: base64Audio, mimeType: "audio/pcm;rate=16000" },
                 });
+              }
+            } else {
+              // Try parsing as JSON first, for backward compatibility
+              try {
+                const text = data.toString();
+                const parsed = JSON.parse(text);
+                const audio = parsed.audio;
+                if (audio && session) {
+                  session.sendRealtimeInput({
+                    audio: { data: audio, mimeType: "audio/pcm;rate=16000" },
+                  });
+                }
+              } catch (jsonErr) {
+                // If text parsing fails, treat it as binary buffer and convert to base64
+                const base64Audio = Buffer.from(data as any).toString('base64');
+                if (session) {
+                  session.sendRealtimeInput({
+                    audio: { data: base64Audio, mimeType: "audio/pcm;rate=16000" },
+                  });
+                }
+              }
             }
           } catch (e) {
             console.error('[WS-VOICE] Error processing incoming client audio message:', e);

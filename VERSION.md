@@ -1,5 +1,51 @@
 # CommuteCast Version History
 
+## 7.41.2-Stable (2026-07-16)
+- **Status**: Production Stable — completed Sprint 7G: Streaming TTS Dispatcher & Interface Layer.
+- **Sprint**: Streaming TTS Dispatcher Layer (Sprint 7G)
+- **Major Capability**:
+  - **Streaming TTS Abstraction**: Introduced `StreamingTTSService` interface defining the `synthesizeStream` contract returning `AsyncIterable<Uint8Array>`.
+  - **Decoupled Streaming Dispatcher**: Engineered `StreamingTTSDispatcher` to orchestrate multi-sentence streaming with high-performance async iteration.
+  - **Event-Driven Delivery**: Implemented a callback-based architecture (`onChunk`, `onDone`, `onError`) ensuring low-latency audio delivery without UI coupling.
+  - **Abort Lifecycle Management**: Integrated native `AbortController` support to safely terminate and cleanup active TTS streams during voice interruptions.
+  - **Mock Architecture Verification**: Added `DummyStreamingTTSService` to verify the end-to-end streaming dispatcher logic without external API dependencies.
+
+## 7.40.6-Stable (2026-07-16)
+- **Status**: Production Stable — completed Sprint 5C: WebRTC VAD Adapter.
+- **Sprint**: WebRTC VAD Adapter (Sprint 5C)
+- **Major Capability**:
+  - **Dynamic WASM Import Resolution**: Safe runtime lazy loading of `webrtc-vad-wasm` module preventing bundler compilation check failures.
+  - **Zero-Allocation PCM Converter**: Highly optimized Float32-to-Int16 PCM conversion using recycled data buffers to avoid memory churn and GC pauses.
+  - **Dual-Debounce Event Detection**: Precise debounce counters to fire `SpeechStarted`, `SpeechContinuing`, and `SpeechEnded` events cleanly without false positives.
+  - **Self-Cleaning Resource Pipeline**: Complete memory/reference release upon adapter stoppage or destruction to preserve audio hardware capacity.
+
+## 7.40.5-Stable (2026-07-16)
+- **Status**: Production Stable — completed Sprint 5B: Voice Activity Detection (VAD) Architecture.
+- **Sprint**: VAD Architecture Layer (Sprint 5B)
+- **Major Capability**:
+  - **Modular VAD Interface standard**: Clean standard contract `VoiceActivityDetector` providing start, stop, reset, process, and destroy methods.
+  - **Comprehensive VAD Event Protocol**: Well-defined model contracts spanning `SpeechStarted`, `SpeechEnded`, `SpeechContinuing`, and `VoiceEnergyUpdated` events.
+  - **Decoupled VAD Adapter Pattern**: Implemented decoupled adapters for `WebRtc`, `Silero`, `Server`, `Gemini`, and `Dummy` systems for future plug-and-play expandability.
+  - **Microphone stream capture hooks**: Integrated high-efficiency, non-locking frame pipeline intercept to process real-time voice capture metrics safely.
+
+## 7.40.4-Stable (2026-07-16)
+- **Status**: Production Stable — completed Sprint 5A: Microphone Capture Constraints.
+- **Sprint**: Microphone Capture Constraints & Browser DSP (Sprint 5A)
+- **Major Capability**:
+  - **Dynamic Audio Constraints Mapping**: Programmatic inspection of available capabilities via `getSupportedConstraints()` to ensure dynamic configuration compatibility.
+  - **Embedded DSP Optimization**: Activated browser native Echo Cancellation, Noise Suppression, and Automatic Gain Control at the stream acquisition stage without performance-intensive JS frameworks.
+  - **Constraint Diagnostic Telemetry**: Comprehensive, lightweight logs tracing hardware settings, capabilities, and active constraints during active microphone sessions.
+
+## 7.40.3-Stable (2026-07-16)
+- **Status**: Production Stable — completed Sprint 2: Ring Buffer & Dual Transport.
+- **Sprint**: Ring Buffer Implementation & Dual Transport (Sprint 2)
+- **Major Capability**:
+  - **O(1) Circular AudioRingBuffer**: A thread-safe, non-blocking, non-locking circular queue that decouples AudioWorklet captures from WebSocket transfers.
+  - **Decoupled 10ms Sender Loop**: High-frequency scheduler that drains the circular buffer asynchronously, preserving interface fluidity.
+  - **Graceful Ring Frame Dropping Policy**: Under network stalls, the circular buffer drops the oldest frame (advances head) to avoid memory footprint expansion.
+  - **Resource Lifecycle Guard & Analytics**: Automatic teardown of the sender interval and buffer memory on disconnect/unmount, logging detailed telemetry metrics.
+  - **Dual Transport Layer**: Implemented raw Binary PCM (Int16 raw byte buffer) as the primary communication protocol with an automated fallback to Base64 Compatibility.
+
 ## 7.40.2-Stable (2026-07-15)
 - **Status**: Production Stable — completed Sprint 2: Production SAVE Pipeline.
 - **Sprint**: Production SAVE Pipeline (Sprint 2)

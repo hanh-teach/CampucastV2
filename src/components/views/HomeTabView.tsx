@@ -149,14 +149,15 @@ export default function HomeTabView({
                       <div 
                         className={cn(
                           "w-20 h-20 rounded-[24px] flex items-center justify-center transition-all duration-500 shadow-inner cursor-pointer",
-                          voiceState === 'listening' ? "bg-red-500 animate-pulse" : "",
-                          voiceState === 'speaking' ? "bg-green-500 animate-bounce" : ""
+                          ['listening', 'speech_detected', 'streaming'].includes(voiceState) ? "bg-red-500 animate-pulse" : "",
+                          voiceState === 'speaking' ? "bg-green-500 animate-bounce" : "",
+                          ['connecting', 'thinking', 'reconnect', 'interrupted'].includes(voiceState) ? "bg-amber-500 animate-pulse" : ""
                         )}
                         style={voiceState === 'idle' && !isProductionActive 
                           ? { backgroundColor: colors.surface, color: colors.textMuted, border: `1px solid ${colors.border}` }
                           : { backgroundColor: colors.interactive, color: colors.onAccent }
                         }
-                        onClick={voiceState === 'idle' ? startListening : stopListening}
+                        onClick={voiceState === 'idle' || voiceState === 'error' ? startListening : stopListening}
                       >
                         <Mic className="w-10 h-10" />
                       </div>
@@ -186,10 +187,34 @@ export default function HomeTabView({
                                   : { backgroundColor: colors.border, color: colors.textMuted }
                                 }
                               >
-                                {voiceState === 'listening' ? "Listening" : voiceState === 'speaking' ? "Speaking" : isProductionActive ? "Processing" : "Standby"}
+                                {(() => {
+                                  switch (voiceState) {
+                                    case 'connecting': return uiLanguage === 'vi' ? 'Đang kết nối' : 'Connecting';
+                                    case 'listening': return uiLanguage === 'vi' ? 'Đang nghe' : 'Listening';
+                                    case 'speech_detected': return uiLanguage === 'vi' ? 'Phát hiện giọng' : 'Speech Detected';
+                                    case 'streaming': return uiLanguage === 'vi' ? 'Đang truyền' : 'Streaming';
+                                    case 'thinking': return uiLanguage === 'vi' ? 'Đang nghĩ' : 'Thinking';
+                                    case 'speaking': return uiLanguage === 'vi' ? 'Đang nói' : 'Speaking';
+                                    case 'interrupted': return uiLanguage === 'vi' ? 'Bị gián đoạn' : 'Interrupted';
+                                    case 'reconnect': return uiLanguage === 'vi' ? 'Kết nối lại' : 'Reconnecting';
+                                    default: return isProductionActive ? "Processing" : "Standby";
+                                  }
+                                })()}
                               </span>
                               <p className="text-[11px] text-text-muted font-medium opacity-60">
-                                {voiceState === 'listening' ? "Đang lắng nghe giọng nói của bạn..." : voiceState === 'speaking' ? "Đang trả lời bằng giọng nói..." : isProductionActive ? pt.productionDesc : "Initiate a new production cycle from the Production Station."}
+                                {(() => {
+                                  switch (voiceState) {
+                                    case 'connecting': return uiLanguage === 'vi' ? 'Đang kết nối đến máy chủ âm thanh...' : 'Connecting to the voice server...';
+                                    case 'listening': return uiLanguage === 'vi' ? 'Sẵn sàng! Hãy nói gì đó...' : 'Ready! Speak now...';
+                                    case 'speech_detected': return uiLanguage === 'vi' ? 'Đã phát hiện giọng nói của bạn...' : 'Speech detected, processing...';
+                                    case 'streaming': return uiLanguage === 'vi' ? 'Đang truyền dữ liệu âm thanh...' : 'Streaming voice audio...';
+                                    case 'thinking': return uiLanguage === 'vi' ? 'Đang phân tích câu trả lời...' : 'Processing response...';
+                                    case 'speaking': return uiLanguage === 'vi' ? 'Đang phát câu trả lời giọng nói...' : 'Playing AI host voice...';
+                                    case 'interrupted': return uiLanguage === 'vi' ? 'Đã bị dừng hoặc ngắt quãng.' : 'Interruption triggered.';
+                                    case 'reconnect': return uiLanguage === 'vi' ? 'Mất kết nối, đang thử lại...' : 'Connection lost, retrying...';
+                                    default: return isProductionActive ? pt.productionDesc : (uiLanguage === 'vi' ? 'Khởi chạy chu kỳ sản xuất mới từ phòng sản xuất.' : 'Initiate a new production cycle from the Production Station.');
+                                  }
+                                })()}
                               </p>
                             </>
                           )}

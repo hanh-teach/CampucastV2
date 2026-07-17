@@ -39,6 +39,9 @@
   - Deliverables: `OPERATOR_INTENT_MODEL.md`, `PREFERENCE_TREE.md`, `SETTINGS_DECISION_FLOW.md`.
 
 ### 🚀 Release Milestones [PHASE B]
+- **Sprint 7G: Streaming TTS Dispatcher & Interface Layer [COMPLETED]** ✅
+  - Goal: Implement a decoupled streaming TTS abstraction layer and dispatcher to support incremental audio delivery.
+  - Deliverables: `StreamingTTSService` interface, `StreamingTTSDispatcher` with `AbortSignal` support, and a mock verification service.
 - **Sprint LIB-101: Media Library Service Layer (Sprint 1) [COMPLETED]** ✅
   - Goal: Formulate a cohesive and robust service model for the Library Workspace to manage all CRUD, archiving, sharing, and multi-format exports.
   - Deliverables: Core business logic implemented inside `src/services/libraryService.ts` with complete integration of JSON, Markdown, DOCX, Script, MP3, and dynamic ZIP bundles via `JSZip` exports.

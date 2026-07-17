@@ -97,6 +97,7 @@ import { PersonalMemory } from "./features/memory/PersonalMemory";
 
 const PwaStatus = lazy(() => import("./features/pwa/PwaStatus").then(m => ({ default: m.PwaStatus })));
 
+import { PERSONALAS } from "./utils/personaData";
 import { DownloadManager } from "./features/download/DownloadManager";
 
 const SettingsCenter = lazy(() => import("./features/settings/SettingsCenter").then(m => ({ default: m.SettingsCenter })));
@@ -759,12 +760,11 @@ const handleApplyPreset = (index: number) => {
     });
 
     // 3. Match AI Host Personas
-    const personas = [
-      { id: "fenrir", category: "persona", titleVi: "Giọng đọc Fenrir (Nam ấm áp)", titleEn: "Fenrir Voice (Warm Male)", descVi: "Người dẫn tự sự, chín chắn và tin cậy", descEn: "Calm, mature, and deeply narrative", action: () => { updatePreferences({ voice: "Fenrir" }); setActiveTab("ai_center"); setAiCenterSubTab("voice"); setShowSearchModal(false); } },
-      { id: "zephyr", category: "persona", titleVi: "Giọng đọc Zephyr (Nữ sôi nổi)", titleEn: "Zephyr Voice (Energetic Female)", descVi: "Phong cách Morning DJ đầy nhiệt lượng", descEn: "High-energy morning show enthusiast", action: () => { updatePreferences({ voice: "Zephyr" }); setActiveTab("ai_center"); setAiCenterSubTab("voice"); setShowSearchModal(false); } },
-      { id: "kore", category: "persona", titleVi: "Giọng đọc Kore (Nữ truyền cảm)", titleEn: "Kore Voice (Expressive Female)", descVi: "Người đọc sâu lắng, truyền thống và trang trọng", descEn: "Traditional, eloquent, and deeply emotional", action: () => { updatePreferences({ voice: "Kore" }); setActiveTab("ai_center"); setAiCenterSubTab("voice"); setShowSearchModal(false); } },
-      { id: "puck", category: "persona", titleVi: "Giọng đọc Puck (Hóm hỉnh vui vẻ)", titleEn: "Puck Voice (Witty & Playful)", descVi: "Dẫn tin hài hước, dí dỏm và linh hoạt", descEn: "Quick-witted, humorous, and entertaining", action: () => { updatePreferences({ voice: "Puck" }); setActiveTab("ai_center"); setAiCenterSubTab("voice"); setShowSearchModal(false); } },
-    ];
+    const personas = PERSONALAS.map(p => ({
+      ...p,
+      category: "persona",
+      action: () => { updatePreferences({ voice: p.voice }); setActiveTab("ai_center"); setAiCenterSubTab("voice"); setShowSearchModal(false); }
+    }));
     personas.forEach(p => {
       if (p.titleVi.toLowerCase().includes(query) || p.titleEn.toLowerCase().includes(query) || p.descVi.toLowerCase().includes(query) || p.descEn.toLowerCase().includes(query)) {
         results.push(p);

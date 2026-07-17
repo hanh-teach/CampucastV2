@@ -1,5 +1,6 @@
 import { ThreePanelLayout } from "../../layouts/ThreePanelLayout";
 import React, { useState, useEffect } from "react";
+import { PERSONALAS } from "../../utils/personaData";
 import { 
   User, 
   Settings2, 

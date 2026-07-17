@@ -1,3 +1,50 @@
+## [7.41.2-Stable] - 2026-07-16
+### Added
+- **Streaming TTS Dispatcher & Interface Layer (Sprint 7G)**:
+  - Engineered a decoupled `StreamingTTSService` interface contract to standardize incremental audio synthesis across multiple providers.
+  - Implemented the core `StreamingTTSDispatcher` in `src/services/streamingTtsDispatcher.ts` to orchestrate `AsyncIterable` stream consumption.
+  - Added full support for standard `AbortSignal` for responsive cancellation and resource cleanup during voice interruptions.
+  - Integrated a mock `DummyStreamingTTSService` implementation for architecture verification and low-latency pipeline testing.
+  - Formulated a clean Event Callback system supporting `onChunk`, `onDone`, and `onError` without UI or AudioContext coupling.
+
+## [7.40.6-Stable] - 2026-07-16
+### Added
+- **WebRTC VAD Adapter (Sprint 5C)**:
+  - Engineered production-grade `WebRtcVadAdapter` conforming to the modular `VoiceActivityDetector` interface contract.
+  - Formulated dynamic, lazy-loaded import pipeline for `'webrtc-vad-wasm'` with runtime string assembly to completely bypass static bundler checking.
+  - Added zero-allocation Float32 to Int16 PCM converter featuring a recycled/pre-allocated buffer to prevent Garbage Collection overhead.
+  - Implemented dual-debounce state machine tracking to identify and trigger `SpeechStarted`, `SpeechContinuing`, and `SpeechEnded` callbacks cleanly.
+  - Integrated full lifecycle cleanup within `stop()`, `reset()`, and `destroy()` methods to prevent memory leaks.
+
+## [7.40.5-Stable] - 2026-07-16
+### Added
+- **Voice Activity Detection (VAD) Architecture Layer (Sprint 5B)**:
+  - Engineered modular `VoiceActivityDetector` interface definition to standardize voice capture event processing.
+  - Formulated comprehensive Event Contract supporting `SpeechStarted`, `SpeechEnded`, `SpeechContinuing`, and `VoiceEnergyUpdated`.
+  - Implemented the Adapter Pattern with multiple decoupled engine bindings: `WebRtcVadAdapter`, `SileroVadAdapter`, `ServerVadAdapter`, `GeminiVadAdapter`, and `DummyVadAdapter`.
+  - Added clean Factory initialization and secure teardown/lifecycle management within the core `useVoiceInteraction.ts` hook.
+  - Integrated dynamic hook injection points (`vadRef.current.process`) within high-frequency AudioWorklet message callback.
+
+## [7.40.4-Stable] - 2026-07-16
+### Added
+- **Microphone Capture Constraints & Browser DSP (Sprint 5A)**:
+  - Dynamically resolved supported media track constraints using `navigator.mediaDevices.getSupportedConstraints()`.
+  - Leveraged browser native Digital Signal Processing (DSP) mechanisms: Echo Cancellation, Noise Suppression, and Auto Gain Control for noise-free raw audio captures.
+  - Implemented automatic fallback constraints to guarantee microphone availability on older browsers.
+  - Implemented non-blocking debug logger to inspect actual settings, requested constraints, and hardware capabilities via `MediaStreamTrack` methods without UI overhead.
+
+## [7.40.3-Stable] - 2026-07-16
+### Added
+- **Ring Buffer Voice Capture Architecture (Sprint 2)**:
+  - Developed a high-performance, O(1) non-blocking, non-locking circular `AudioRingBuffer` class to isolate audio recording from WebSocket transmission.
+  - Implemented automatic oldest frame dropping policy when buffer is full to prevent memory leaks or blocking.
+  - Created a decoupled 10ms Sender Loop that processes, encodes, and transmits cached audio frames.
+  - Implemented complete resource cleanup and performance metrics tracking (bufferSize, maxBufferSize, droppedFrames, sentFrames) on stop, disconnect, and unmount.
+- **Dual Transport Layer (Binary PCM & Base64 Fallback)**:
+  - Upgraded client-side voice sender loop to prioritize raw Binary PCM transmission (Int16Array raw buffer) directly over WebSocket.
+  - Engineered automatic fallback to Base64-wrapped JSON transport if binary transfer fails.
+  - Updated server-side WebSocket message processing to transparently auto-detect and handle both binary payloads and JSON strings, preserving full backward compatibility.
+
 ## [7.40.2-Stable] - 2026-07-15
 ### Added
 - **Production SAVE Pipeline (Sprint 2)**:

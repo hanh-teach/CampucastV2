@@ -1,0 +1,1 @@
+import{J as i,j as p,e as d,N as r}from"./index-D3Qjam52.js";const u=({children:t,className:s,variant:e,...o})=>{const{variant:n}=i(),a=e||n;return p.jsx("div",{className:d("bg-surface-card rounded-[24px] border border-border-subtle/40 shadow-sm transition-all duration-300",a===r.Compact?"p-4 gap-3":a===r.Regular?"p-6 gap-4":"p-8 gap-6",s),...o,children:t})};export{u as A};
