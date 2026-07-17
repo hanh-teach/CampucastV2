@@ -8,7 +8,7 @@
     "dev:client": "vite",
     "build": "npm run clean && npm rebuild @tailwindcss/oxide && vite build && esbuild server.ts --bundle --platform=node --format=cjs --sourcemap --external:lightningcss --external:esbuild --external:sharp --external:bcrypt --external:grpc --external:vite --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
-    "clean": "rimraf dist server.js server.cjs server.js.map server.cjs.map",
+   "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true});['server.js','server.cjs','server.js.map','server.cjs.map'].forEach(f=>require('fs').rmSync(f,{force:true}))\"",
     "lint": "tsc --noEmit",
     "lint:hardcoded-colors": "grep -rE '(bg|text|border|ring)-(slate|gray|rose|amber|cyan|emerald|blue|red|indigo|orange)-[0-9]+' src --exclude-dir=foundation --exclude-dir=node_modules",
     "test": "tsx tests/run-all-tests.ts"
