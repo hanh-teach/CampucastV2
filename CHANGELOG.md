@@ -1,3 +1,31 @@
+## [7.42.1-Stable] - 2026-07-18
+### Fixed
+- **Mobile UI/UX Layout Enhancements (Contextual Floating Bar)**:
+  - Redesigned the "Selected Articles" floating context action bar to be fully fluid and responsive across Windows, Android, iOS, and other touch devices.
+  - Replaced the fixed button height (`h-9`) with a dynamic height (`h-auto`) and generous padding (`py-2 px-4`) to prevent long Vietnamese button text ("Tạo bản tin từ nguồn đã chọn") from overflowing or overlapping vertically on narrow mobile viewports.
+  - Enabled automatic stacking of action buttons (`flex-col md:flex-row` and `flex-col sm:flex-row`) on mobile devices to optimize horizontal real-estate, and ensured safe tap targets (`min-h-[44px]`) on mobile for compliance with touch guidelines.
+
+## [7.42.0-Stable] - 2026-07-18
+### Added
+- **Upgraded Speech Recognition Robustness (Sprint 7H)**:
+  - Implemented automatic, diacritic-independent and tone-accent independent cleaning in `/src/utils/parseVoiceCommand.ts` via standard Normalization Form Decomposition (`NFD`).
+  - Strengthened keyword and phrasal recognition tolerance to accept standard Vietnamese and English speech variations (including imperfect phonetic pronunciations like "hêy phác", "hây phạt", "hê dừng", "hêy dựng", "hây rưng", etc.).
+- **Voice Commands Upgrade**:
+  - Configured high-accuracy direct triggers for "Hây, phát" ("Hey Play") to control audio playback cleanly.
+  - Configured high-accuracy direct triggers for "Hây, dừng" ("Hey, Stop") to trigger pausing or stopping actions.
+  - Expanded `matchAndStripWakeWord` helper in `/src/hooks/useDrivingMode.ts` to accept short conversational wake starters ("hây", "hey", "hê", "hêy", "hay", "ây", etc.) as wake-words, ensuring perfect continuous-mode execution while maintaining full backward compatibility.
+
+## [7.41.3-Stable] - 2026-07-18
+### Added
+- **AI Studio Workspace Migration**:
+  - Successfully imported and normalized the entire application code tree from GitHub (`hanh-teach/CampucastV2`).
+  - Successfully resolved all runtime, bundle, and environment configurations.
+  - Verified and passed all 153 unit and integration tests across the 30 active suites with 100% green compliance.
+  - Validated secure server port bindings, Vite configurations, and database/storage failover patterns under the new sandbox constraints.
+- **Sidebar & Operator Desk Enhancements**:
+  - Resolved the layout gap underneath the "< THU GỌN" button by moving the global page footer inside the scrollable `<main>` viewport panel. This allows the Sidebar to stretch completely to the bottom of the screen, removing the hollow gap under the button while preserving its exact original rounded style as requested.
+  - Aligned translation keys in the Operator Desk ("BÀN ĐIỀU HÀNH") by updating the idle state heading from "Sẵn Sàng Sản Xuất" to "Cast trò chuyện" and its standby description from "Khởi chạy chu kỳ sản xuất mới từ phòng sản xuất." to "Campucast luôn đồng hành cùng bạn." to match strategic brand identity.
+
 ## [7.41.2-Stable] - 2026-07-16
 ### Added
 - **Streaming TTS Dispatcher & Interface Layer (Sprint 7G)**:

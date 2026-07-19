@@ -9,6 +9,16 @@ describe("parseVoiceCommand", () => {
     // "mở giùm" is now correctly parsed as PLAY
     expect(parseVoiceCommand("mở giùm", "vi")).toEqual({ type: "PLAY" });
     expect(parseVoiceCommand("resume", "en")).toEqual({ type: "PLAY" });
+
+    // Hây, phát / Hey Play phonetic variants
+    expect(parseVoiceCommand("Hây, phát", "vi")).toEqual({ type: "PLAY" });
+    expect(parseVoiceCommand("Hey Play", "en")).toEqual({ type: "PLAY" });
+    expect(parseVoiceCommand("hê phát", "vi")).toEqual({ type: "PLAY" });
+    expect(parseVoiceCommand("hêy phác", "vi")).toEqual({ type: "PLAY" });
+    expect(parseVoiceCommand("hây phạt", "vi")).toEqual({ type: "PLAY" });
+    expect(parseVoiceCommand("hay play", "en")).toEqual({ type: "PLAY" });
+    expect(parseVoiceCommand("he play", "en")).toEqual({ type: "PLAY" });
+    expect(parseVoiceCommand("ây phát", "vi")).toEqual({ type: "PLAY" });
   });
 
   it("should parse pause commands", () => {
@@ -17,6 +27,16 @@ describe("parseVoiceCommand", () => {
     expect(parseVoiceCommand("dừng lại", "vi")).toEqual({ type: "PAUSE" });
     expect(parseVoiceCommand("im lặng", "vi")).toEqual({ type: "PAUSE" });
     expect(parseVoiceCommand("stop", "en")).toEqual({ type: "PAUSE" });
+
+    // Hây, dừng / Hey, Stop phonetic variants
+    expect(parseVoiceCommand("Hây, dừng", "vi")).toEqual({ type: "PAUSE" });
+    expect(parseVoiceCommand("Hey, Stop", "en")).toEqual({ type: "PAUSE" });
+    expect(parseVoiceCommand("hê dừng", "vi")).toEqual({ type: "PAUSE" });
+    expect(parseVoiceCommand("hêy dựng", "vi")).toEqual({ type: "PAUSE" });
+    expect(parseVoiceCommand("hây rưng", "vi")).toEqual({ type: "PAUSE" });
+    expect(parseVoiceCommand("hay stop", "en")).toEqual({ type: "PAUSE" });
+    expect(parseVoiceCommand("he stop", "en")).toEqual({ type: "PAUSE" });
+    expect(parseVoiceCommand("ây dừng", "vi")).toEqual({ type: "PAUSE" });
   });
 
   it("should parse next commands", () => {

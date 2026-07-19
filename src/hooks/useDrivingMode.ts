@@ -26,15 +26,19 @@ export interface UseDrivingModeReturn {
 
 export function matchAndStripWakeWord(text: string, uiLanguage: "vi" | "en"): { matched: boolean; stripped: string } {
   const normalizedText = text.toLowerCase().trim();
+  
+  // Ordered from longest to shortest to prevent short words from matching first and breaking longer phrases
   const wakeWords = uiLanguage === "vi" 
-    ? ["cast ơi", "này cast", "ơi cast", "cát ơi", "này cát", "này kết", "kết ơi"]
-    : ["hey cast", "ok cast", "hey assistant", "hey cash", "hi cast", "cast"];
+    ? ["cast ơi", "này cast", "ơi cast", "cát ơi", "này cát", "này kết", "kết ơi", "hêy", "hey", "hây", "hê", "hay", "ây", "ôi"]
+    : ["hey assistant", "hey cast", "ok cast", "hey cash", "hi cast", "cast", "hey", "hay", "he", "hi"];
 
   for (const word of wakeWords) {
     const index = normalizedText.indexOf(word);
     if (index !== -1) {
       const stripped = normalizedText.substring(index + word.length).trim();
-      return { matched: true, stripped };
+      // Clean up any leading/trailing commas or punctuation that might remain after stripping
+      const cleanedStripped = stripped.replace(/^[.,\/#!$%\^&\*;:{}=\-_`~()?"'\s]+/, "").trim();
+      return { matched: true, stripped: cleanedStripped };
     }
   }
   return { matched: false, stripped: normalizedText };

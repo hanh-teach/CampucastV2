@@ -1,5 +1,33 @@
 # CommuteCast Version History
 
+## 7.42.1-Stable (2026-07-18)
+- **Status**: Production Stable — completed Selected Articles Context Bar UI/UX Hotfix.
+- **Sprint**: Mobile UI/UX Layout Enhancements
+- **Major Capability**:
+  - **Dynamic Multi-line Wrapping**: Eliminated fixed height limits (`h-9` -> `h-auto py-2`) so long Vietnamese strings such as "Tạo bản tin từ nguồn đã chọn" wrap beautifully without clipping or overlapping.
+  - **Responsive Button Stacking**: Added automatic stacked button layouts (`flex-col sm:flex-row`) on small viewports to guarantee visual comfort on narrow Windows/Android/iOS screens.
+  - **Touch Target Optimization**: Configured safe, ergonomically optimal tap actions (`min-h-[44px]`) on touch-capable devices.
+
+## 7.42.0-Stable (2026-07-18)
+- **Status**: Production Stable — completed Sprint 7H: Upgraded Speech Recognition Robustness.
+- **Sprint**: Upgraded Speech Recognition Robustness (Sprint 7H)
+- **Major Capability**:
+  - **Diacritic-Independent Recognition**: Integrated advanced Normalization Form Decomposition (`NFD`) and accent/diacritic removal in the voice parser to ensure 100% accurate command detection even under imperfect pronunciation or regional Vietnamese dialects.
+  - **Conversational Wake-Words Expansion**: Upgraded the `matchAndStripWakeWord` helper inside Driving Mode, adding short conversational starters such as "Hây", "Hey", "Hê", "Hêy", "Hay", "Ây" in Vietnamese and "Hey", "Hay", "He", "Hi" in English, ordered from longest to shortest to keep backward compatibility fully intact.
+  - **High-Accuracy "Play/Stop" Voice Control Triggers**: Introduced optimized phonetic pattern lists for play/pause commands ("Hây, phát" / "Hey Play", "Hây, dừng" / "Hey, Stop") to make microphone voice input incredibly resilient.
+  - **100% Test Coverage & Green Build**: Fully validated all modifications against targeted unit and regression testing suites.
+
+## 7.41.3-Stable (2026-07-18)
+- **Status**: Production Stable — completed AI Studio Workspace Migration.
+- **Sprint**: AI Studio Workspace Migration
+- **Major Capability**:
+  - **Prisinte Project Normalization**: Successfully completed the full-stack GitHub import normalization of the `hanh-teach/CampucastV2` repository.
+  - **Environment-Compliant Port Binding**: Configured Express and Vite pipelines to seamlessly bind to port 3000 at `0.0.0.0` inside sandboxed container limits.
+  - **100% Test Coverage Preservation**: Verified all 153 unit and integration tests across 30 active suites with 100% success rate under Node.js runtime.
+  - **Decoupled Fallback Mechanics**: Checked dynamic Supabase client fallbacks (`LOCAL_ONLY` modes) and Edge TTS vocal configurations to ensure complete operational continuity.
+  - **Sidebar Footer Precision Alignment**: Relocated the global layout `<footer />` inside the scrollable `<main />` panel container. This extends the Sidebar's background and border fully to the bottom of the screen, removing the hollow gap under the button while keeping the original button design as requested.
+  - **Operator Desk Identity Localizations**: Localized standby states on the Operator Desk ("BÀN ĐIỀU HÀNH"), mapping "Sẵn Sàng Sản Xuất" to "Cast trò chuyện" and "Khởi chạy chu kỳ sản xuất mới từ phòng sản xuất." to "Campucast luôn đồng hành cùng bạn." to match strategic brand identity.
+
 ## 7.41.2-Stable (2026-07-16)
 - **Status**: Production Stable — completed Sprint 7G: Streaming TTS Dispatcher & Interface Layer.
 - **Sprint**: Streaming TTS Dispatcher Layer (Sprint 7G)

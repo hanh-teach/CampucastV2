@@ -72,7 +72,7 @@ export default function HomeTabView({
     vi: {
       deskTitle: "Bàn Điều Hành",
       createCta: "Sản Xuất Bản Tin",
-      missionIdle: "Sẵn Sàng Sản Xuất",
+      missionIdle: "Cast trò chuyện",
       continueMission: "Tiếp Tục Công Việc",
       allOk: "Hoạt động tốt",
       viewAll: "Xem tất cả",
@@ -212,7 +212,7 @@ export default function HomeTabView({
                                     case 'speaking': return uiLanguage === 'vi' ? 'Đang phát câu trả lời giọng nói...' : 'Playing AI host voice...';
                                     case 'interrupted': return uiLanguage === 'vi' ? 'Đã bị dừng hoặc ngắt quãng.' : 'Interruption triggered.';
                                     case 'reconnect': return uiLanguage === 'vi' ? 'Mất kết nối, đang thử lại...' : 'Connection lost, retrying...';
-                                    default: return isProductionActive ? pt.productionDesc : (uiLanguage === 'vi' ? 'Khởi chạy chu kỳ sản xuất mới từ phòng sản xuất.' : 'Initiate a new production cycle from the Production Station.');
+                                    default: return isProductionActive ? pt.productionDesc : (uiLanguage === 'vi' ? 'Campucast luôn đồng hành cùng bạn.' : 'Initiate a new production cycle from the Production Station.');
                                   }
                                 })()}
                               </p>

@@ -1162,6 +1162,21 @@ const handleApplyPreset = (index: number) => {
 
                  </Suspense>
          </ErrorBoundary>
+          
+          <footer className="bg-surface-card border-t border-border-primary py-8 mt-12 text-text-dim">
+            <div className="max-w-7xl mx-auto px-6 flex flex-wrap justify-between items-center gap-4 text-xs">
+              <div className="flex items-center gap-1.5">
+                <AudioLines className="w-3.5 h-3.5 text-brand-accent" />
+                <span className="font-semibold text-text-muted">CommuteCast Radio News</span>
+                <span>© 2026| Created by Nguyen Viet Dieu</span>
+              </div>
+              <div className="flex gap-4">
+                <span>Gemini Dual-Speech Architecture (TTS 24kHz)</span>
+                <span>•</span>
+                <span>Made with Gemini 3.1 & 3.5</span>
+              </div>
+            </div>
+          </footer>
        </main>
 
        {/* Floating / Side Player Panel for Production History & Global Playback */}
@@ -1207,20 +1222,7 @@ const handleApplyPreset = (index: number) => {
          )}
        </AnimatePresence>
      </div>
-           <footer className="bg-surface-card border-t border-border-primary py-8 mt-12 text-text-dim">
-        <div className="max-w-7xl mx-auto px-6 flex flex-wrap justify-between items-center gap-4 text-xs">
-          <div className="flex items-center gap-1.5">
-            <AudioLines className="w-3.5 h-3.5 text-brand-accent" />
-            <span className="font-semibold text-text-muted">CommuteCast Radio News</span>
-            <span>© 2026| Created by Nguyen Viet Dieu</span>
-          </div>
-          <div className="flex gap-4">
-            <span>Gemini Dual-Speech Architecture (TTS 24kHz)</span>
-            <span>•</span>
-            <span>Made with Gemini 3.1 & 3.5</span>
-          </div>
-        </div>
-      </footer>
+           
 
       <AssistantChat 
         activeTab={activeTab}

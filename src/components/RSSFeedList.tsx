@@ -272,34 +272,34 @@ export default function RSSFeedList({
 
       {/* Floating / Contextual Action Bar when articles are selected */}
       {selectedArticles.length > 0 && (
-        <div className="p-3 border rounded-app-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-app-lg animate-fade-in-up"
+        <div className="p-4 border rounded-app-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-app-lg animate-fade-in-up"
              style={{ backgroundColor: colors.surfaceOverlay, borderColor: colors.border }}>
-          <span className="text-[11px] font-black uppercase tracking-wide" style={{ color: colors.textPrimary }}>
+          <span className="text-[12px] font-black uppercase tracking-wide text-center md:text-left" style={{ color: colors.textPrimary }}>
             {uiLanguage === "vi" 
               ? `Đã chọn ${selectedArticles.length} bài viết. Bạn muốn:` 
               : `Selected ${selectedArticles.length} articles. What would you like to do?`}
           </span>
 
-          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto shrink-0">
             <Button
               variant="secondary"
               onClick={() => handleAddToDraftClick()}
-              className="flex-1 sm:flex-initial border h-9"
+              className="w-full sm:w-auto h-auto min-h-[44px] sm:min-h-[38px] py-2 px-4 text-xs font-bold transition-all flex items-center justify-center border"
               style={{ backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border }}
             >
-              <Plus className="w-3.5 h-3.5 mr-1.5" style={{ color: colors.interactive }} />
-              <span>{t.btnAddToDraft}</span>
+              <Plus className="w-4 h-4 mr-1.5 shrink-0" style={{ color: colors.interactive }} />
+              <span className="leading-tight">{t.btnAddToDraft}</span>
             </Button>
 
             <Button
-              variant="default"
+              variant="primary"
               disabled={isGenerating}
               onClick={() => onGenerateFromSelected(selectedArticles)}
-              className="flex-1 sm:flex-initial border-0 h-9 font-black"
+              className="w-full sm:w-auto h-auto min-h-[44px] sm:min-h-[38px] py-2 px-4 text-xs font-black transition-all flex items-center justify-center border-0"
               style={{ backgroundColor: colors.interactive, color: colors.onAccent }}
             >
-              <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse" />
-              <span>{t.btnGenerateNow}</span>
+              <Sparkles className="w-4 h-4 mr-1.5 shrink-0 animate-pulse" />
+              <span className="leading-tight">{t.btnGenerateNow}</span>
             </Button>
           </div>
         </div>

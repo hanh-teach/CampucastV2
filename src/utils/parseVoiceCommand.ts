@@ -7,6 +7,21 @@ export type Action =
   | { type: "UNRECOGNIZED"; raw: string };
 
 /**
+ * Normalizes string by lowering case, replacing punctuation with spaces,
+ * and stripping Vietnamese diacritics/accents to make phonetic comparison extremely resilient.
+ */
+export function cleanString(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Strip diacritics/tone marks
+    .replace(/[đĐ]/g, "d")
+    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"']/g, " ") // Replace punctuation with space
+    .replace(/\s+/g, " ") // Collapse whitespace
+    .trim();
+}
+
+/**
  * Parses a voice command text into a structured Action.
  */
 export function parseVoiceCommand(text: string, lang: "vi" | "en"): Action {
@@ -16,99 +31,153 @@ export function parseVoiceCommand(text: string, lang: "vi" | "en"): Action {
     return { type: "UNRECOGNIZED", raw: text };
   }
 
+  const cleaned = cleanString(text);
+
   // 1. EXIT (High Priority)
   const exitPhrases = [
-    "thoát", "đóng", "exit", "close", "quit", 
-    "về nhà", "nghỉ lái", "tắt hud", "xong rồi", 
-    "trang chủ", "quay về trang chủ", "quay lại trang chủ"
+    "thoat", "dong", "exit", "close", "quit", 
+    "ve nha", "nghi lai", "tat hud", "xong roi", 
+    "trang chu", "quay ve trang chu", "quay lai trang chu",
+    "ve", "quay ve", "quay lai"
   ];
-  if (exitPhrases.includes(normalizedText) || normalizedText === "về" || normalizedText === "quay về") {
+  if (exitPhrases.some(p => cleaned === p || cleaned.includes(p))) {
     return { type: "EXIT" };
   }
 
   // 2. NEXT
   const nextPhrases = [
-    "qua bài", "tiếp theo", "bài khác", "next", "skip", 
-    "bỏ qua", "tới luôn", "bài mới", "kế tiếp", "chuyển bài"
+    "qua bai", "tiep theo", "bai khac", "next", "skip", 
+    "bo qua", "toi luon", "bai moi", "ke tiep", "chuyen bai"
   ];
-  if (nextPhrases.some(p => normalizedText.includes(p))) {
+  if (nextPhrases.some(p => cleaned.includes(p))) {
     return { type: "NEXT" };
   }
 
   // 3. FORWARD
   const forwardPhrases = [
-    "tua nhanh", "tua tới", "forward", "fast forward", 
-    "nhích lên", "tới chút", "tua đi"
+    "tua nhanh", "tua toi", "forward", "fast forward", 
+    "nhich len", "toi chut", "tua di"
   ];
-  if (forwardPhrases.some(p => normalizedText.includes(p))) {
+  if (forwardPhrases.some(p => cleaned.includes(p))) {
     return { type: "FORWARD", seconds: 15 };
   }
 
   // 4. REWIND
   const rewindPhrases = [
-    "tua lại", "lùi", "quay lại", "rewind", "back", 
-    "lùi lại", "hồi nãy", "nghe lại"
+    "tua lai", "lui", "quay lai", "rewind", "back", 
+    "lui lai", "hoi nay", "nghe lai"
   ];
-  if (rewindPhrases.some(p => normalizedText.includes(p))) {
+  if (rewindPhrases.some(p => cleaned.includes(p))) {
     return { type: "REWIND", seconds: 15 };
   }
 
   // 5. SWITCH_VIEW - BRIEFING (NEWS)
-  const briefingPhrases = ["bản tin", "nghe tin", "briefing", "news", "tin tức", "mở tin", "mở news"];
+  const briefingPhrases = ["ban tin", "nghe tin", "briefing", "news", "tin tuc", "mo tin", "mo news"];
   const matchesBriefing = briefingPhrases.some(phrase => {
-    if (normalizedText === phrase) return true;
-    const regex = new RegExp(`\\b(mở|vào|chuyển|sang|nghe)\\s+${phrase}\\b`, "i");
-    return regex.test(normalizedText);
+    if (cleaned === phrase) return true;
+    const regex = new RegExp(`\\b(mo|vao|chuyen|sang|nghe)\\s+${phrase}\\b`, "i");
+    return regex.test(cleaned);
   });
   if (matchesBriefing) {
     return { type: "SWITCH_VIEW", view: "briefing" };
   }
 
   // 6. SWITCH_VIEW - YOUTUBE
-  const youtubePhrases = ["youtube", "entertainment", "giải trí", "xem youtube", "mở youtube", "chuyển giải trí"];
+  const youtubePhrases = ["youtube", "entertainment", "giai tri", "xem youtube", "mo youtube", "chuyen giai tri"];
   const matchesYoutube = youtubePhrases.some(phrase => {
-    if (normalizedText === phrase) return true;
-    const regex = new RegExp(`\\b(mở|vào|chuyển|sang|xem)\\s+${phrase}\\b`, "i");
-    return regex.test(normalizedText);
+    if (cleaned === phrase) return true;
+    const regex = new RegExp(`\\b(mo|vao|chuyen|sang|xem)\\s+${phrase}\\b`, "i");
+    return regex.test(cleaned);
   });
-  if (matchesYoutube) {
+  if (youtubePhrases.some(p => cleaned === p) || matchesYoutube) {
     return { type: "SWITCH_VIEW", view: "youtube" };
   }
 
   // 7. SEARCH (Starts with check, must extract remaining part)
-  const searchPrefixes = ["tìm kiếm", "search for", "mở bài", "tìm bài", "tìm", "search"];
+  const searchPrefixes = ["tim kiem", "search for", "mo bai", "tim bai", "tim", "search"];
   for (const prefix of searchPrefixes) {
-    if (normalizedText.startsWith(prefix)) {
-      const query = normalizedText.substring(prefix.length).trim();
+    const prefixCleaned = cleanString(prefix);
+    if (cleaned.startsWith(prefixCleaned)) {
+      // Find the remaining search query in normalized text to preserve case
+      const originalIndex = normalizedText.indexOf(prefix);
+      let query = "";
+      if (originalIndex !== -1) {
+        query = normalizedText.substring(originalIndex + prefix.length).trim();
+      } else {
+        query = normalizedText.substring(prefixCleaned.length).trim();
+      }
       if (query) {
         return { type: "SEARCH", query };
       } else {
-        // If they said only the search keyword like "tìm kiếm" with no query, return UNRECOGNIZED
         return { type: "UNRECOGNIZED", raw: text };
       }
     }
   }
 
-  // 8. PLAY
-  const playPhrases = [
-    "phát", "chạy", "tiếp", "nghe", "mở", "bật", "vào", 
-    "play", "resume", "go", "continue", "đọc", "đọc tiếp", 
-    "tiếp đi", "mở giùm", "mở hộ", "chạy tiếp", "mở nhạc", "tiếp tục"
+  // 8. PLAY ("Hây, phát" / "Hey Play" with wide phonetic variants)
+  const playStarters = ["hay", "hey", "he", "he_y", "ay", "oi", "cat", "ket", "nay", "hi", "alo", "o", "ơi"];
+  const playActions = ["phat", "phac", "bat", "chay", "play", "tiep", "nghe", "mo", "resume", "go", "continue", "doc"];
+  
+  // Direct matches
+  const playDirectPhrases = [
+    "hay phat", "hey phat", "he phat", "hay phac", "hey phac", "he phac",
+    "hey play", "hay play", "he play", "hay bat", "hey bat", "he bat", "hi play", "ay phat"
   ];
-  if (playPhrases.some(p => normalizedText.includes(p))) {
+  
+  const hasDirectPlay = playDirectPhrases.some(p => cleaned.includes(p));
+  
+  // Combo starter + action
+  const hasComboPlay = playStarters.some(s => cleaned.startsWith(s + " ")) && 
+                       playActions.some(a => cleaned.endsWith(" " + a) || cleaned.includes(" " + a));
+                       
+  // Solo matches
+  const playPhrases = [
+    "phat", "chay", "tiep", "nghe", "mo", "bat", "vao", 
+    "play", "resume", "go", "continue", "doc", "doc tiep", 
+    "tiep di", "mo gium", "mo ho", "chay tiep", "mo nhac", "tiep tuc",
+    "phac", "phat di", "bat len", "bat nhac", "bạt"
+  ];
+  const hasSoloPlay = playPhrases.some(p => {
+    const cleanP = cleanString(p);
+    return cleaned === cleanP || cleaned.endsWith(" " + cleanP);
+  });
+
+  if (hasDirectPlay || hasComboPlay || hasSoloPlay) {
     return { type: "PLAY" };
   }
 
-  // 9. PAUSE
-  const pausePhrases = [
-    "tạm dừng", "dừng", "ngừng", "ngưng", "tắt", "thôi", 
-    "pause", "stop", "halt", "nghỉ", "im", "im lặng", 
-    "dừng lại", "dừng giùm"
+  // 9. PAUSE ("Hây, dừng" / "Hey, Stop" with wide phonetic variants)
+  const pauseStarters = ["hay", "hey", "he", "he_y", "ay", "oi", "cat", "ket", "nay", "hi", "alo", "o"];
+  const pauseActions = ["dung", "rung", "stop", "stopp", "ngung", "tat", "thoi", "pause", "giam", "ho", "gium"];
+  
+  // Direct matches
+  const pauseDirectPhrases = [
+    "hay dung", "hey dung", "he dung", "hay dung", "hey dung", "he dung",
+    "hey stop", "hay stop", "he stop", "hay tat", "hey tat", "he tat", "hay rung", "hey rung"
   ];
-  if (pausePhrases.some(p => normalizedText.includes(p))) {
+  
+  const hasDirectPause = pauseDirectPhrases.some(p => cleaned.includes(p));
+  
+  // Combo starter + action
+  const hasComboPause = pauseStarters.some(s => cleaned.startsWith(s + " ")) && 
+                        pauseActions.some(a => cleaned.endsWith(" " + a) || cleaned.includes(" " + a));
+                        
+  // Solo matches
+  const pausePhrases = [
+    "tam dung", "dung", "ngung", "tat", "thoi", 
+    "pause", "stop", "halt", "nghi", "im", "im lang", 
+    "dung lai", "dung gium", "rung", "tat di"
+  ];
+  const hasSoloPause = pausePhrases.some(p => {
+    const cleanP = cleanString(p);
+    return cleaned === cleanP || cleaned.endsWith(" " + cleanP);
+  });
+
+  if (hasDirectPause || hasComboPause || hasSoloPause) {
     return { type: "PAUSE" };
   }
 
   // If no specific match was found, return UNRECOGNIZED
   return { type: "UNRECOGNIZED", raw: text };
 }
+
