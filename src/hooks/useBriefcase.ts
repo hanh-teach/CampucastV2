@@ -1,0 +1,180 @@
+import { useState, useEffect, useCallback } from "react";
+import { SavedSummary } from "../types";
+import {
+  getAllBriefings,
+  getBriefing as fetchBriefing,
+  clearAll as purgeAll,
+  migrateLegacyLocalStorageData,
+  getStorageEstimate,
+  isIndexedDBSupported
+} from "../services/storageService";
+import {
+  syncSaveBriefingAsync,
+  syncDeleteBriefingAsync
+} from "../services/syncService";
+import { clearAllLocalDataComprehensive } from "../services/dataClearService";
+import { archiveMission } from "../services/libraryService";
+
+export function useBriefcase() {
+  const [briefings, setBriefings] = useState<SavedSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [storageUsage, setStorageUsage] = useState<{ usedMB: number; totalMB?: number }>({ usedMB: 0 });
+  const [isDBSupported, setIsDBSupported] = useState(true);
+
+  // Load briefings list (default metadata only for maximum speed)
+  const refreshBriefings = useCallback(async (includeAudio = false) => {
+    setLoading(true);
+    try {
+      const data = await getAllBriefings(includeAudio);
+      setBriefings(data);
+      const estimate = await getStorageEstimate();
+      setStorageUsage(estimate);
+      setError(null);
+    } catch (err: any) {
+      console.error("Failed to load briefings:", err);
+      setError("Failed to load briefings.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Run migration and initial load on mount
+  useEffect(() => {
+    setIsDBSupported(isIndexedDBSupported());
+    const initStorage = async () => {
+      try {
+        // Run migration of legacy data
+        const migratedCount = await migrateLegacyLocalStorageData();
+        if (migratedCount > 0) {
+          console.log(`Successfully migrated ${migratedCount} old items from localStorage to IndexedDB.`);
+        }
+      } catch (err) {
+        console.warn("Migration failed during hook init:", err);
+      } finally {
+        // Load metadata only for high performance list rendering
+        await refreshBriefings(false);
+      }
+    };
+    initStorage();
+  }, [refreshBriefings]);
+
+  const saveNewBriefing = useCallback(async (item: SavedSummary) => {
+    try {
+      await syncSaveBriefingAsync(item);
+      // Reload metadata list
+      await refreshBriefings(false);
+      return true;
+    } catch (err: any) {
+      console.error("Save briefing failed:", err);
+      if (err.message === "STORAGE_QUOTA_EXCEEDED") {
+        setError("Storage quota exceeded. Please delete some old briefings.");
+        alert("⚠️ Bộ nhớ lưu trữ đầy (Storage Quota Exceeded)! Vui lòng xóa bớt một số bản tin cũ để giải phóng bộ nhớ và tiếp tục lưu trữ.");
+      } else {
+        setError("Failed to save briefing.");
+      }
+      return false;
+    }
+  }, [refreshBriefings]);
+
+  const deleteOneBriefing = useCallback(async (id: string) => {
+    try {
+      await syncDeleteBriefingAsync(id);
+      await refreshBriefings(false);
+      return true;
+    } catch (err) {
+      console.error(`Failed to delete briefing with ID: ${id}`, err);
+      setError("Failed to delete briefing.");
+      return false;
+    }
+  }, [refreshBriefings]);
+
+  const clearAllBriefings = useCallback(async () => {
+    try {
+      await purgeAll();
+      await refreshBriefings(false);
+      return true;
+    } catch (err) {
+      console.error("Failed to clear briefings store:", err);
+      setError("Failed to clear briefings database.");
+      return false;
+    }
+  }, [refreshBriefings]);
+
+  const clearAllLocalDataComprehensiveWrapped = useCallback(async (options: { clearCloud: boolean }) => {
+    try {
+      const res = await clearAllLocalDataComprehensive(options);
+      await refreshBriefings(false);
+      return res;
+    } catch (err) {
+      console.error("Failed to execute comprehensive clear:", err);
+      setError("Failed to execute comprehensive clear.");
+      return null;
+    }
+  }, [refreshBriefings]);
+
+  const getFullBriefing = useCallback(async (id: string): Promise<SavedSummary | null> => {
+    try {
+      return await fetchBriefing(id);
+    } catch (err) {
+      console.error(`Failed to load full briefing with ID: ${id}`, err);
+      setError("Failed to load full briefing.");
+      return null;
+    }
+  }, []);
+
+  const archiveBriefing = useCallback(async (id: string, archive: boolean) => {
+    try {
+      const item = briefings.find(b => b.id === id);
+      if (!item) return false;
+      const res = await archiveMission(item, archive);
+      if (res.success) {
+        await refreshBriefings(false);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("Failed to archive briefing:", err);
+      return false;
+    }
+  }, [briefings, refreshBriefings]);
+
+  const updateBriefingTags = useCallback(async (id: string, tags: string[]) => {
+    try {
+      let fullItem = await fetchBriefing(id);
+      if (!fullItem) {
+        fullItem = briefings.find(b => b.id === id) || null;
+      }
+      if (!fullItem) return false;
+
+      const updatedItem = {
+        ...fullItem,
+        tags
+      };
+
+      await syncSaveBriefingAsync(updatedItem);
+      await refreshBriefings(false);
+      return true;
+    } catch (err) {
+      console.error("Failed to update briefing tags:", err);
+      return false;
+    }
+  }, [briefings, refreshBriefings]);
+
+  return {
+    briefings,
+    loading,
+    error,
+    storageUsage,
+    isDBSupported,
+    saveNewBriefing,
+    deleteOneBriefing,
+    archiveBriefing,
+    updateBriefingTags,
+    clearAllBriefings,
+    clearAllLocalDataComprehensive: clearAllLocalDataComprehensiveWrapped,
+    getFullBriefing,
+    refreshBriefings
+  };
+}
+export default useBriefcase;

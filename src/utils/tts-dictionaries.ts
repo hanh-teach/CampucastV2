@@ -1,0 +1,40 @@
+export const COMMON_PROPER_NOUNS = new Set([
+  "google", "openai", "gemini", "chatgpt", "apple", "microsoft", "tesla", 
+  "world cup", "premier league", "nba", "fifa", "github", "facebook", 
+  "youtube", "amazon", "netflix", "meta", "instagram", "tiktok", "twitter",
+  "spacex", "android", "ios", "windows", "linux", "macbook", "iphone", "ipad",
+  "samsung", "intel", "nvidia", "amd", "nasa", "manchester united", "chelsea",
+  "liverpool", "arsenal", "real madrid", "barcelona", "bayern munich", "champion league"
+]);
+
+export const ACRONYM_MAP_VI: Record<string, string> = {
+  "AI": "ây ai",
+  "CEO": "xi i ô",
+  "CFO": "xi ép ô",
+  "CTO": "xi ti ô",
+  "GDP": "gi đi pi",
+  "NASA": "Na-sa",
+  "FIFA": "Phi-pha",
+  "WHO": "đáp-lưu ết-ô",
+  "UNESCO": "u-nét-xcô",
+  "ASEAN": "a-xê-an",
+  "USD": "u ét đê",
+  "ADB": "a đê bê",
+  "TP.HCM": "thành phố Hồ Chí Minh",
+  "TP HCM": "thành phố Hồ Chí Minh",
+  "UBND": "ủy ban nhân dân",
+  "HĐND": "hội đồng nhân dân",
+  "TW": "trung ương",
+  "CHXHCNVN": "cộng hòa xã hội chủ nghĩa việt nam",
+  "KHKT": "khoa học kỹ thuật",
+  "CSGT": "cảnh sát giao thông",
+  "BĐS": "bất động sản",
+  "TNHH": "trách nhiệm hữu hạn",
+  "TAND": "tòa án nhân dân",
+  "QĐND": "quân đội nhân dân",
+  "BCA": "bộ công an",
+  "BQP": "bộ quốc phòng",
+  "VNĐ": "việt nam đồng",
+  "FDI": "ép đê y",
+  "IPO": "ai pi ô"
+};

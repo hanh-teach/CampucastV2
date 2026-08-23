@@ -1,0 +1,21 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: npm install --include=optional
+      - run: npm run lint
+      - run: npm run lint:hardcoded-colors
+      - run: npm run build
+      - name: Run tests with coverage
+        run: npx c8 --include='src/domain/runtime/**/*.ts' --lines 60 --check-coverage npx tsx tests/run-all-tests.ts

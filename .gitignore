@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# Build outputs
+dist/
+dist-ssr/
+*.local
+
+# Sourcemaps and debug files
+*.map
+
+# Local media, audio caching and generated episodes database
+local_podcasts/
+tts_cache/
+published-podcasts.json
+*.mp3
+*.wav
+*.pcm
+
+# Temporary test & patch scripts
+patch_*.cjs
+test-page.mjs
+test.txt
+debug-env.ts
+
+
