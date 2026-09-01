@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from "motion/react";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { cn } from "../../lib/utils";
@@ -288,16 +289,45 @@ export const BriefingItem = ({
   const accent = getBriefingAccent(brief.tags);
 
   return (
-    <Card
-      key={brief.id}
-      onClick={() => onSelect(brief.id)}
-      className={cn(
-        "p-6 transition-all cursor-pointer flex flex-col justify-between items-center group",
-        isSelected 
-          ? `border-2 ${accent.selectedBorder} ${accent.selectedBg}` 
-          : `border border-border-subtle ${accent.hoverBorder} bg-surface-subtle/20`
-      )}
+    <motion.div
+      layout="position"
+      initial={{ opacity: 0, y: 12, scale: 0.98 }}
+      animate={{ 
+        opacity: isDeleting ? 0.4 : 1, 
+        y: 0, 
+        scale: isDeleting ? 0.96 : 1,
+        transition: { duration: 0.25, ease: "easeOut" }
+      }}
+      exit={{
+        opacity: 0,
+        x: -120,
+        scale: 0.92,
+        filter: "blur(4px)",
+        transition: { 
+          duration: 0.35, 
+          ease: [0.32, 0, 0.67, 0] 
+        }
+      }}
+      whileHover={{ 
+        scale: 1.015,
+        y: -2,
+        transition: { duration: 0.2, ease: "easeOut" } 
+      }}
+      whileTap={{ scale: 0.995 }}
+      transition={{
+        layout: { duration: 0.3, ease: "easeInOut" }
+      }}
+      className="w-full"
     >
+      <Card
+        onClick={() => onSelect(brief.id)}
+        className={cn(
+          "p-6 transition-all cursor-pointer flex flex-col justify-between items-center group shadow-sm hover:shadow-md",
+          isSelected 
+            ? `border-2 ${accent.selectedBorder} ${accent.selectedBg}` 
+            : `border border-border-subtle ${accent.hoverBorder} bg-surface-subtle/20`
+        )}
+      >
       <div className="w-full space-y-4">
         <div className="flex justify-between items-start">
           <div className="space-y-2 text-left min-w-0 flex-1 pr-6">
@@ -610,5 +640,6 @@ export const BriefingItem = ({
         </div>
       )}
     </Card>
+    </motion.div>
   );
 };

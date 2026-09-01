@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { Card } from "../ui/Card";
@@ -468,30 +469,32 @@ export default function AssetsTabView({
             <div className="space-y-4">
               {activeCategory === "missions" && (
                 filteredBriefings.length > 0 ? (
-                  filteredBriefings.map((brief) => (
-                    <BriefingItem
-                      key={brief.id}
-                      brief={brief}
-                      isSelected={selectedBriefingId === brief.id}
-                      onSelect={setSelectedBriefingId}
-                      onPlay={onPlayBriefing}
-                      isPlayerPlaying={isPlayerPlaying && selectedBriefId === brief.id}
-                      uiLanguage={uiLanguage}
-                      deleteOneBriefing={deleteOneBriefing}
-                      archiveBriefing={archiveBriefing}
-                      getFullBriefing={getFullBriefing}
-                      updateBriefingTags={updateBriefingTags}
-                      handleApplyIntelligenceBriefing={(b) => {
-                        handleApplyIntelligenceBriefing(b);
-                        setActiveTab("mission_studio");
-                        if (setMissionStudioSubTab) {
-                          setMissionStudioSubTab("editor");
-                        }
-                      }}
-                      handleRefresh={handleRefresh}
-                      showToast={showToast}
-                    />
-                  ))
+                  <AnimatePresence mode="popLayout">
+                    {filteredBriefings.map((brief) => (
+                      <BriefingItem
+                        key={brief.id}
+                        brief={brief}
+                        isSelected={selectedBriefingId === brief.id}
+                        onSelect={setSelectedBriefingId}
+                        onPlay={onPlayBriefing}
+                        isPlayerPlaying={isPlayerPlaying && selectedBriefId === brief.id}
+                        uiLanguage={uiLanguage}
+                        deleteOneBriefing={deleteOneBriefing}
+                        archiveBriefing={archiveBriefing}
+                        getFullBriefing={getFullBriefing}
+                        updateBriefingTags={updateBriefingTags}
+                        handleApplyIntelligenceBriefing={(b) => {
+                          handleApplyIntelligenceBriefing(b);
+                          setActiveTab("mission_studio");
+                          if (setMissionStudioSubTab) {
+                            setMissionStudioSubTab("editor");
+                          }
+                        }}
+                        handleRefresh={handleRefresh}
+                        showToast={showToast}
+                      />
+                    ))}
+                  </AnimatePresence>
                 ) : (
                   <div className="py-20 text-center space-y-4">
                     <div className="w-16 h-16 bg-surface-subtle rounded-full flex items-center justify-center mx-auto">
@@ -757,30 +760,32 @@ export default function AssetsTabView({
                         <ArchiveIcon className="w-4 h-4 text-brand-accent" /> 
                         {uiLanguage === "vi" ? "Nhiệm vụ đã lưu trữ" : "Archived Missions"}
                       </h3>
-                      {archivedBriefings.map((brief) => (
-                        <BriefingItem
-                          key={brief.id}
-                          brief={brief}
-                          isSelected={selectedBriefingId === brief.id}
-                          onSelect={setSelectedBriefingId}
-                          onPlay={onPlayBriefing}
-                          isPlayerPlaying={isPlayerPlaying && selectedBriefId === brief.id}
-                          uiLanguage={uiLanguage}
-                          deleteOneBriefing={deleteOneBriefing}
-                          archiveBriefing={archiveBriefing}
-                          updateBriefingTags={updateBriefingTags}
-                          getFullBriefing={getFullBriefing}
-                          handleApplyIntelligenceBriefing={(b) => {
-                            handleApplyIntelligenceBriefing(b);
-                            setActiveTab("mission_studio");
-                            if (setMissionStudioSubTab) {
-                              setMissionStudioSubTab("editor");
-                            }
-                          }}
-                          handleRefresh={handleRefresh}
-                          showToast={showToast}
-                        />
-                      ))}
+                      <AnimatePresence mode="popLayout">
+                        {archivedBriefings.map((brief) => (
+                          <BriefingItem
+                            key={brief.id}
+                            brief={brief}
+                            isSelected={selectedBriefingId === brief.id}
+                            onSelect={setSelectedBriefingId}
+                            onPlay={onPlayBriefing}
+                            isPlayerPlaying={isPlayerPlaying && selectedBriefId === brief.id}
+                            uiLanguage={uiLanguage}
+                            deleteOneBriefing={deleteOneBriefing}
+                            archiveBriefing={archiveBriefing}
+                            updateBriefingTags={updateBriefingTags}
+                            getFullBriefing={getFullBriefing}
+                            handleApplyIntelligenceBriefing={(b) => {
+                              handleApplyIntelligenceBriefing(b);
+                              setActiveTab("mission_studio");
+                              if (setMissionStudioSubTab) {
+                                setMissionStudioSubTab("editor");
+                              }
+                            }}
+                            handleRefresh={handleRefresh}
+                            showToast={showToast}
+                          />
+                        ))}
+                      </AnimatePresence>
                     </div>
                   )}
                   <PodcastManager
