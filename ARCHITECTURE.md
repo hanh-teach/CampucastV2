@@ -63,6 +63,7 @@ The system operates strictly on three main architectural layers:
 
 ### A. Modular Client Capabilities (`src/services`)
 Business and infrastructure services are separated into individual decoupled modules to promote maintainability and offline resilience:
+*   **Enterprise Capability (`enterpriseService.ts`)**: Manages multi-tenant organization workspaces, granular RBAC (Station Lead, Producer, Sound Engineer, Listener), broadcast channel configurations, editorial approval queues, and reach analytics telemetry with durable local persistence.
 *   **Storage Capability (`offlineStorageService.ts` / `indexedDBQueue.ts`)**: Manages local caching of multi-block audio chunks (Base64 buffers) and mission script metadata, allowing smooth offline playback on mobile devices without redownloading.
 *   **Feed Capability (`rssService.ts`)**: Resolves, fetches, and parses raw XML feeds into structured content models.
 *   **Telemetry Capability (`telemetryService.ts`)**: Tracks player metrics (play, pause, skip, completion rate) to analyze usability and user behavior.

@@ -256,41 +256,131 @@ export default function PreferencesForm({
           </div>
         </div>
 
-        {/* Target Duration slider */}
-        <div>
-          <label className="text-xs font-bold uppercase tracking-wider block mb-1.5" style={{ color: colors.textSecondary }}>
-            {t.labelDuration}
-          </label>
-          <div className="grid grid-cols-3 gap-1 p-1 rounded-xl" style={{ backgroundColor: colors.surfaceOverlay }}>
-            {[
-              { key: "short", label: t.durShort },
-              { key: "medium", label: t.durMedium },
-              { key: "long", label: t.durLong }
-            ].map((dur) => (
-              <button
-                key={dur.key}
-                type="button"
-                onClick={() => updatePreferences({ targetDuration: dur.key as any })}
-                className={cn(
-                  "py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer",
-                  preferences.targetDuration === dur.key 
-                    ? "shadow-sm" 
-                    : "hover:opacity-80"
-                )}
-                style={{
-                  backgroundColor: preferences.targetDuration === dur.key ? colors.surface : "transparent",
-                  color: preferences.targetDuration === dur.key ? colors.textPrimary : colors.textMuted
-                }}
-              >
-                {dur.label}
-              </button>
-            ))}
+        {/* Target Duration & Adaptive Commute Time */}
+        <div className="md:col-span-2 p-4 border rounded-xl" style={{ backgroundColor: colors.surfaceOverlay, borderColor: colors.border }}>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: colors.textPrimary }}>
+              <Clock className="w-3.5 h-3.5 text-amber-500" />
+              <span>{uiLanguage === "vi" ? "Thời Lượng Hành Trình & Nhịp Điệu (Adaptive Snapping)" : "Commute Duration & Pacing Snapping"}</span>
+            </label>
+            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full border" style={{ backgroundColor: colors.surface, borderColor: colors.border, color: colors.warning }}>
+              {preferences.targetDurationMinutes || (preferences.targetDuration === "short" ? 3 : preferences.targetDuration === "long" ? 15 : 6)} {uiLanguage === "vi" ? "phút" : "mins"} 
+              {" • ~"}{((preferences.targetDurationMinutes || (preferences.targetDuration === "short" ? 3 : preferences.targetDuration === "long" ? 15 : 6)) * (preferences.pacingProfile === "dense" ? 160 : preferences.pacingProfile === "relaxed" ? 120 : 140)).toLocaleString()} {uiLanguage === "vi" ? "từ" : "words"}
+            </span>
           </div>
-          <span className="text-[10px] block mt-1" style={{ color: colors.textMuted }}>
-            {preferences.targetDuration === "short" && t.durDescShort}
-            {preferences.targetDuration === "medium" && t.durDescMedium}
-            {preferences.targetDuration === "long" && t.durDescLong}
-          </span>
+
+          {/* Quick presets */}
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {[
+              { mins: 3, label: uiLanguage === "vi" ? "⚡ 3p (Ngắn)" : "⚡ 3m (Quick)", dur: "short" },
+              { mins: 5, label: uiLanguage === "vi" ? "🚗 5p (Vừa)" : "🚗 5m (Commute)", dur: "medium" },
+              { mins: 10, label: uiLanguage === "vi" ? "🚇 10p (Chuẩn)" : "🚇 10m (Standard)", dur: "medium" },
+              { mins: 15, label: uiLanguage === "vi" ? "🎙️ 15p (Sâu)" : "🎙️ 15m (Deep)", dur: "long" },
+              { mins: 20, label: uiLanguage === "vi" ? "🚌 20p (Dài)" : "🚌 20m (Long)", dur: "long" },
+              { mins: 30, label: uiLanguage === "vi" ? "📻 30p (Podcast)" : "📻 30m (Full Cast)", dur: "long" },
+            ].map((p) => {
+              const active = (preferences.targetDurationMinutes === p.mins) || (!preferences.targetDurationMinutes && preferences.targetDuration === p.dur && p.mins === (p.dur === "short" ? 3 : p.dur === "long" ? 15 : 6));
+              return (
+                <button
+                  key={p.mins}
+                  type="button"
+                  onClick={() => updatePreferences({ targetDurationMinutes: p.mins, targetDuration: p.dur as any })}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer",
+                    active ? "shadow-sm" : "hover:border-interactive"
+                  )}
+                  style={{
+                    backgroundColor: active ? colors.surface : "transparent",
+                    borderColor: active ? colors.warning : colors.border,
+                    color: active ? colors.textPrimary : colors.textMuted
+                  }}
+                >
+                  {p.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Custom Slider */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t" style={{ borderColor: colors.border }}>
+            <div>
+              <div className="flex justify-between text-[11px] mb-1 font-medium" style={{ color: colors.textSecondary }}>
+                <span>{uiLanguage === "vi" ? "Tùy chỉnh thời gian:" : "Custom duration:"}</span>
+                <span className="font-bold">{preferences.targetDurationMinutes || 5} {uiLanguage === "vi" ? "phút" : "min"}</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="45"
+                step="1"
+                value={preferences.targetDurationMinutes || (preferences.targetDuration === "short" ? 3 : preferences.targetDuration === "long" ? 15 : 6)}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  updatePreferences({
+                    targetDurationMinutes: val,
+                    targetDuration: val <= 3 ? "short" : val >= 15 ? "long" : "medium"
+                  });
+                }}
+                className="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-amber-500 bg-neutral-200 dark:bg-neutral-700"
+              />
+            </div>
+
+            {/* Pacing profile */}
+            <div>
+              <div className="flex justify-between text-[11px] mb-1 font-medium" style={{ color: colors.textSecondary }}>
+                <span>{uiLanguage === "vi" ? "Nhịp độ đọc (Pacing):" : "Pacing profile:"}</span>
+                <span className="font-bold">
+                  {preferences.pacingProfile === "dense" ? (uiLanguage === "vi" ? "Dồn dập (160 wpm)" : "Dense (160 wpm)")
+                    : preferences.pacingProfile === "relaxed" ? (uiLanguage === "vi" ? "Thư thả (120 wpm)" : "Relaxed (120 wpm)")
+                    : (uiLanguage === "vi" ? "Cân bằng (140 wpm)" : "Balanced (140 wpm)")}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg border" style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
+                {[
+                  { key: "relaxed", label: uiLanguage === "vi" ? "Thong thả" : "Relaxed" },
+                  { key: "balanced", label: uiLanguage === "vi" ? "Cân bằng" : "Balanced" },
+                  { key: "dense", label: uiLanguage === "vi" ? "Dày đặc" : "Dense" }
+                ].map((pac) => {
+                  const active = (preferences.pacingProfile || "balanced") === pac.key;
+                  return (
+                    <button
+                      key={pac.key}
+                      type="button"
+                      onClick={() => updatePreferences({ pacingProfile: pac.key as any })}
+                      className="py-1 text-[10px] font-semibold rounded transition-all"
+                      style={{
+                        backgroundColor: active ? colors.surfaceOverlay : "transparent",
+                        color: active ? colors.warning : colors.textMuted
+                      }}
+                    >
+                      {pac.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Offline Pre-caching Zero-Lag Toggle */}
+          <div className="mt-3 pt-2.5 border-t flex items-center justify-between" style={{ borderColor: colors.border }}>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold" style={{ color: colors.textPrimary }}>
+                {uiLanguage === "vi" ? "⚡ Bộ đệm ngoại tuyến Zero-Latency (Pre-caching)" : "⚡ Offline Zero-Latency Pre-caching"}
+              </span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">
+                Sprint 4.0
+              </span>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={preferences.offlinePrecacheEnabled !== false}
+                onChange={(e) => updatePreferences({ offlinePrecacheEnabled: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-9 h-5 bg-neutral-300 peer-focus:outline-none rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+            </label>
+          </div>
         </div>
 
         {/* Transit commute type */}

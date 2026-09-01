@@ -1,5 +1,5 @@
 export type Action = 
-  | { type: "SWITCH_VIEW"; view: "youtube" | "briefing" }
+  | { type: "SWITCH_VIEW"; view: "youtube" | "briefing" | "radar" }
   | { type: "SEARCH"; query: string }
   | { type: "PLAY" } | { type: "PAUSE" }
   | { type: "NEXT" } | { type: "PREVIOUS" }
@@ -7,6 +7,8 @@ export type Action =
   | { type: "VOLUME_UP" } | { type: "VOLUME_DOWN" } | { type: "MUTE" } | { type: "UNMUTE" }
   | { type: "TRAFFIC_ALERT" }
   | { type: "ASSISTANT"; prompt?: string }
+  | { type: "EXPLAIN_DEEPER"; topic?: string }
+  | { type: "SUMMARIZE_FAST" }
   | { type: "EXIT" }
   | { type: "UNRECOGNIZED"; raw: string };
 
@@ -97,6 +99,24 @@ export function parseVoiceCommand(text: string, lang: "vi" | "en"): Action {
     return { type: "ASSISTANT", prompt: prompt || undefined };
   }
 
+  // 2.1 EXPLAIN DEEPER / DEEP DIVE (Sprint 4.1 Hands-free Agent)
+  const explainPhrases = [
+    "giai thich them", "giai thich ro hon", "noi ro hon", "noi chi tiet hon", "ke chi tiet hon",
+    "chi tiet hon", "tim hieu them", "deep dive", "explain more", "tell me more", "details"
+  ];
+  if (explainPhrases.some(p => cleaned.includes(p) || fuzzyMatch(cleaned, p, 2))) {
+    const topic = cleaned.replace(/giai thich them|giai thich ro hon|noi ro hon|noi chi tiet hon|ke chi tiet hon|chi tiet hon|tim hieu them|deep dive|explain more|tell me more|details/g, "").trim();
+    return { type: "EXPLAIN_DEEPER", topic: topic || undefined };
+  }
+
+  // 2.2 SUMMARIZE FAST / QUICK RECAP (Sprint 4.1 Hands-free Agent)
+  const summarizePhrases = [
+    "tom tat nhanh", "tom tat lai", "doc nhanh hon", "rut gon", "quick summary", "recap", "summarize"
+  ];
+  if (summarizePhrases.some(p => cleaned.includes(p) || fuzzyMatch(cleaned, p, 2))) {
+    return { type: "SUMMARIZE_FAST" };
+  }
+
   // 3. TRAFFIC ALERT / EMERGENCY
   const trafficPhrases = [
     "giao thong", "canh bao", "tac duong", "ket xe", "traffic", "tinh trang duong", "bao tac duong", "canh bao giao thong"
@@ -179,6 +199,17 @@ export function parseVoiceCommand(text: string, lang: "vi" | "en"): Action {
   });
   if (youtubePhrases.some(p => cleaned === p) || matchesYoutube) {
     return { type: "SWITCH_VIEW", view: "youtube" };
+  }
+
+  // 8.1 SWITCH_VIEW - RADAR & TRAFFIC OVERLAY (Sprint 5.0)
+  const radarPhrases = ["ra da", "radar", "ban do", "giao thong", "diem nong", "traffic radar", "map", "tinh hinh duong", "kiem tra duong"];
+  const matchesRadar = radarPhrases.some(phrase => {
+    if (cleaned === phrase) return true;
+    const regex = new RegExp(`\\b(mo|vao|chuyen|sang|xem|bat)\\s+${phrase}\\b`, "i");
+    return regex.test(cleaned) || fuzzyMatch(cleaned, phrase, 2);
+  });
+  if (radarPhrases.some(p => cleaned === p) || matchesRadar) {
+    return { type: "SWITCH_VIEW", view: "radar" };
   }
 
   // 9. SEARCH (Supports rich Vietnamese & English music/video query prefixes)

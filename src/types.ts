@@ -147,6 +147,38 @@ export interface SummaryPayload {
   conclusion: string;
   suggestedTags?: string[];
   confirmedTags?: string[];
+  targetDurationMinutes?: number;
+  estimatedTotalWords?: number;
+}
+
+export type PacingProfile = "dense" | "balanced" | "relaxed";
+
+export interface DurationConstraint {
+  targetDurationMinutes: number;
+  targetDurationSec: number;
+  toleranceSec: number;
+  pacingProfile: PacingProfile;
+  targetWordCount: number;
+}
+
+export interface MissionAudioSegmentMeta {
+  index: number;
+  title: string;
+  durationSec: number;
+  cached: boolean;
+  byteSize?: number;
+}
+
+export interface MissionAudioManifest {
+  missionId: string;
+  briefingId: string;
+  createdAt: number;
+  targetDurationSec: number;
+  actualDurationSec?: number;
+  isFullyCached: boolean;
+  cachedAt?: number;
+  totalSizeEstimatedBytes: number;
+  segments: MissionAudioSegmentMeta[];
 }
 
 export interface BroadcastConfiguration {
@@ -159,6 +191,9 @@ export interface BroadcastConfiguration {
   pitch: number;
   isDrivingMode: boolean;
   targetDuration: "short" | "medium" | "long";
+  targetDurationMinutes?: number; // Exact minutes (e.g. 3, 5, 10, 15, 20, 30)
+  pacingProfile?: PacingProfile; // 'dense' (160wpm), 'balanced' (140wpm), 'relaxed' (120wpm)
+  offlinePrecacheEnabled?: boolean; // Sprint 4.0 offline zero-latency cache
   tone: "conversational" | "informative" | "upbeat" | "analytical" | "witty";
   focus: string;
   commuteType: "driving" | "transit" | "walking" | "cycling";
@@ -184,6 +219,7 @@ export interface BroadcastConfiguration {
   favoriteTopics?: string[];
   trafficAlertsEnabled?: boolean;
   autoAudioAlertsEnabled?: boolean;
+  geofenceRadiusKm?: number; // Sprint 5.0 Geo-Spatial Radar
   isOfflineMode?: boolean;
   isLowPowerModeEnabled?: boolean;
   autoLowPowerThreshold?: number;
@@ -461,10 +497,11 @@ export interface YouTubePlayerState {
 export type WorkspaceSubTab = "dashboard" | "recent" | "continue" | "suggestions";
 export type MissionStudioSubTab = "source" | "research" | "draft" | "editor" | "voice" | "preview" | "publish" | "history";
 export type LibrarySubTab = "missions" | "audio" | "scripts" | "sources" | "templates" | "archive" | "read_history";
-export type AICenterSubTab = "models" | "prompt" | "personas" | "voice" | "memory" | "automation";
+export type AICenterSubTab = "enterprise" | "models" | "prompt" | "personas" | "voice" | "memory" | "automation";
 export type SettingsSubTab = "general" | "appearance" | "storage" | "sync" | "security" | "pwa" | "about";
+export type EnterpriseSubTab = "channels" | "approval" | "team" | "analytics";
 
-export type TabType = "workspace" | "mission_studio" | "library" | "ai_center" | "settings";
+export type TabType = "workspace" | "mission_studio" | "library" | "ai_center" | "enterprise" | "settings";
 
 export enum LayoutVariant {
   Compact = "compact",
@@ -661,6 +698,91 @@ export interface SyncConflictItem {
   };
 }
 
+/**
+ * Enterprise Multi-Tenant & Team Collaboration Types (Sprint 6.0)
+ */
+export type EnterpriseRole = "station_lead" | "producer" | "audio_engineer" | "listener";
 
+export interface EnterpriseMember {
+  id: string;
+  name: string;
+  email: string;
+  role: EnterpriseRole;
+  department: string;
+  avatarUrl?: string;
+  lastActiveAt: string;
+  status: "active" | "invited" | "offline";
+  permissions: string[];
+}
 
+export interface EnterpriseOrganization {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl?: string;
+  tier: "starter" | "pro" | "enterprise";
+  memberCount: number;
+  departments: string[];
+  sharedStorageQuotaMb: number;
+  sharedStorageUsedMb: number;
+  customVoices: string[];
+  activeChannelCount: number;
+}
 
+export interface EnterpriseBroadcastChannel {
+  id: string;
+  orgId: string;
+  name: string;
+  description: string;
+  frequency: "daily_morning" | "daily_evening" | "instant_alert" | "weekly_wrap";
+  targetDepartments: string[];
+  assignedProducerIds: string[];
+  activeListenersCount: number;
+  autoPublishEnabled: boolean;
+  currentEpisodeTitle?: string;
+  scheduleTime?: string;
+  lastAiredAt?: string;
+  bannerGradient?: string;
+}
+
+export type ApprovalStatus = "draft" | "under_review" | "approved" | "rejected" | "live_on_air";
+
+export interface EnterpriseBroadcastApprovalItem {
+  id: string;
+  orgId: string;
+  channelId: string;
+  channelName: string;
+  title: string;
+  summary: string;
+  scriptContent: string;
+  authorName: string;
+  authorRole: EnterpriseRole;
+  status: ApprovalStatus;
+  durationSec: number;
+  wordCount: number;
+  targetAudience: string;
+  submittedAt: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  rejectionReason?: string;
+  audioReady: boolean;
+  audioUrl?: string;
+}
+
+export interface EnterpriseAnalyticsMetrics {
+  totalTeamHoursSaved: number;
+  activeCommuterCount: number;
+  totalEpisodesAired: number;
+  averageCompletionRate: number;
+  departmentBreakdown: {
+    department: string;
+    engagement: number;
+    listenerCount: number;
+    hoursSaved: number;
+  }[];
+  dailyEngagementTrend: {
+    date: string;
+    listeners: number;
+    completionPct: number;
+  }[];
+}

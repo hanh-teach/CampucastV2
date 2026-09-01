@@ -107,9 +107,11 @@ export const Header: React.FC<HeaderProps> = ({
                     style={{ color: colors.textPrimary }}>
                 {activeBriefingTitle 
                   ? `${uiLanguage === "vi" ? "Đang phát" : "Playing"}: ${activeBriefingTitle}` 
-                  : mission 
-                    ? `${uiLanguage === "vi" ? "Nhiệm vụ" : "Mission"}: ${mission.name}`
-                    : `Active Session: ${activeTab}`}
+                  : activeTab === "enterprise"
+                    ? `${uiLanguage === "vi" ? "🏢 Trạm Doanh Nghiệp" : "🏢 Enterprise Station"}`
+                    : mission 
+                      ? `${uiLanguage === "vi" ? "Nhiệm vụ" : "Mission"}: ${mission.name}`
+                      : `Active Session: ${activeTab}`}
               </span>
            </div>
         </div>

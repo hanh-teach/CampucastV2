@@ -156,6 +156,8 @@ interface DrivingModeProps {
 import { parseVoiceCommand } from "../utils/parseVoiceCommand";
 import { CommutePlaylistEngine, CommutePlaylist } from "./CommutePlaylistEngine";
 import WebAutoBridge from "./WebAutoBridge";
+import { TrafficRadarOverlay } from "./TrafficRadarOverlay";
+import { useTrafficAlerts } from "../hooks/useTrafficAlerts";
 import { Gauge, Sun, Moon, MapPin, ListMusic, Radio } from "lucide-react";
 
 export default function DrivingMode({
@@ -186,7 +188,7 @@ export default function DrivingMode({
   const { preferences, updatePreferences } = useUserPreferences();
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [localFeedback, setLocalFeedback] = useState("");
-  const [activeView, setActiveView] = useState<"briefing" | "youtube">("briefing");
+  const [activeView, setActiveView] = useState<"briefing" | "youtube" | "radar">("briefing");
   const [isHighContrast, setIsHighContrast] = useState<boolean>(false);
   const [showPlaylistModal, setShowPlaylistModal] = useState<boolean>(false);
   const [showWebAutoBridge, setShowWebAutoBridge] = useState<boolean>(false);
@@ -194,6 +196,23 @@ export default function DrivingMode({
   const [isSpeechActive, setIsSpeechActive] = useState(false);
   const [showVoiceHelp, setShowVoiceHelp] = useState(false);
   const [ytVoiceAction, setYtVoiceAction] = useState<{ type: string; timestamp: number } | null>(null);
+
+  // Geo-Spatial Traffic Alerts & Radar Integration (Sprint 5.0)
+  const {
+    activeAlert: localActiveAlert,
+    isAlertAudioPlaying,
+    userCoords,
+    nearbyAlerts,
+    isGeoFenceActive,
+    playAlertAudio,
+    refreshTraffic,
+    dismissAlert
+  } = useTrafficAlerts({
+    preferences,
+    uiLanguage,
+    isDrivingMode: true,
+    autoAudioAlertsEnabled: autoAudioAlertsEnabled || preferences.autoAudioAlertsEnabled
+  });
 
   const playTTS = useCallback((msg: string) => {
     setIsSpeechActive(true);
@@ -205,25 +224,27 @@ export default function DrivingMode({
     );
   }, [uiLanguage]);
 
+  const triggerSuccessFeedback = useCallback((msg: string) => {
+    setLocalFeedback(msg);
+    playBeep(880, 0.1);
+    setTimeout(() => {
+      playTTS(msg);
+    }, 150);
+    if (preferences.hapticFeedbackEnabled !== false && typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+  }, [playTTS, preferences.hapticFeedbackEnabled]);
+
   const handleVoiceCommand = useCallback((commandText: string) => {
     const action = parseVoiceCommand(commandText, uiLanguage);
-    
-    const triggerSuccessFeedback = (msg: string) => {
-      setLocalFeedback(msg);
-      playBeep(880, 0.1);
-      setTimeout(() => {
-        playTTS(msg);
-      }, 150);
-      if (preferences.hapticFeedbackEnabled !== false && typeof navigator !== "undefined" && navigator.vibrate) {
-        navigator.vibrate(50);
-      }
-    };
 
     switch (action.type) {
       case "SWITCH_VIEW":
         setActiveView(action.view);
         if (action.view === "youtube") {
           triggerSuccessFeedback(uiLanguage === "vi" ? "📺 Chế độ giải trí YouTube" : "📺 YouTube Entertainment Mode");
+        } else if (action.view === "radar") {
+          triggerSuccessFeedback(uiLanguage === "vi" ? "🗺️ Rá-đa giao thông không gian" : "🗺️ Geo-Spatial Traffic Radar");
         } else {
           triggerSuccessFeedback(uiLanguage === "vi" ? "📰 Chế độ bản tin phát thanh" : "📰 Briefing Mode");
         }
@@ -282,10 +303,20 @@ export default function DrivingMode({
         triggerSuccessFeedback(uiLanguage === "vi" ? "🔊 Đã bật tiếng" : "🔊 Unmuted");
         break;
       case "TRAFFIC_ALERT":
-        triggerSuccessFeedback(uiLanguage === "vi" ? "⚠️ Đang kiểm tra cảnh báo giao thông..." : "⚠️ Checking Traffic Alert...");
+        setActiveView("radar");
+        triggerSuccessFeedback(uiLanguage === "vi" ? "🗺️ Đang mở Rá-đa & Quét tình trạng giao thông..." : "🗺️ Opening Radar & Scanning Traffic...");
+        if (localActiveAlert) {
+          playAlertAudio(localActiveAlert.audioScript);
+        }
         break;
       case "ASSISTANT":
         triggerSuccessFeedback(uiLanguage === "vi" ? `🤖 Trợ lý: "${action.prompt || 'Đang lắng nghe'}"` : `🤖 Assistant: "${action.prompt || 'Listening'}"`);
+        break;
+      case "EXPLAIN_DEEPER":
+        triggerSuccessFeedback(uiLanguage === "vi" ? `🔍 Đang mở rộng phân tích chi tiết...` : `🔍 Expanding deeper analysis...`);
+        break;
+      case "SUMMARIZE_FAST":
+        triggerSuccessFeedback(uiLanguage === "vi" ? `⚡ Tóm tắt nhanh trọng tâm bản tin...` : `⚡ Rapid recap of key takeaways...`);
         break;
       case "FORWARD":
         triggerSuccessFeedback(uiLanguage === "vi" ? `⏩ Tua nhanh ${action.seconds}s` : `⏩ Fast Forward ${action.seconds}s`);
@@ -310,7 +341,7 @@ export default function DrivingMode({
     }
 
     setTimeout(() => setLocalFeedback(""), 3000);
-  }, [isPlaying, onPlayPause, onSkip, onExit, onNext, uiLanguage, preferences.hapticFeedbackEnabled, playTTS]);
+  }, [isPlaying, onPlayPause, onSkip, onExit, onNext, uiLanguage, preferences.hapticFeedbackEnabled, triggerSuccessFeedback, localActiveAlert, playAlertAudio, activeView]);
 
   const {
     isListening,
@@ -543,6 +574,16 @@ export default function DrivingMode({
           <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline">CARPLAY / AUTO</span>
         </button>
 
+        {/* Voice Command Reference Guide Button (Sprint 4.1) */}
+        <button
+          onClick={() => setShowVoiceHelp(true)}
+          className="p-2 md:p-2.5 rounded-xl border border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 flex items-center gap-1.5 transition-all active:scale-95 shadow-md shrink-0"
+          title={uiLanguage === "vi" ? "Mở danh sách khẩu lệnh AI" : "Open Voice Commands Reference"}
+        >
+          <Mic className="w-4 h-4 md:w-5 md:h-5 text-cyan-400" />
+          <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline">{uiLanguage === "vi" ? "LỆNH GIỌNG NÓI" : "VOICE GUIDE"}</span>
+        </button>
+
         {/* Traffic Alert & Auto Audio Toggle Control Button */}
         {(hasActiveAlert || trafficAlert) ? (
           <button
@@ -616,16 +657,26 @@ export default function DrivingMode({
           <button
             onClick={() => setActiveView("briefing")}
             className={cn(
-              "px-3 md:px-8 py-2 md:py-3 rounded-xl font-black text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all",
+              "px-3 md:px-6 py-2 md:py-3 rounded-xl font-black text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all",
               activeView === "briefing" ? "bg-blue-600 text-white shadow-lg" : "text-white/40 hover:text-white/60"
             )}
           >
             {uiLanguage === "vi" ? "BẢN TIN" : "BRIEFING"}
           </button>
           <button
+            onClick={() => setActiveView("radar")}
+            className={cn(
+              "px-3 md:px-6 py-2 md:py-3 rounded-xl font-black text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all flex items-center gap-1.5",
+              activeView === "radar" ? "bg-cyan-600 text-white shadow-lg shadow-cyan-500/30" : "text-white/40 hover:text-white/60"
+            )}
+          >
+            <Radio className="w-3 h-3 text-cyan-300 animate-pulse" />
+            {uiLanguage === "vi" ? "RÁ-ĐA" : "RADAR"}
+          </button>
+          <button
             onClick={() => setActiveView("youtube")}
             className={cn(
-              "px-3 md:px-8 py-2 md:py-3 rounded-xl font-black text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all flex items-center gap-2",
+              "px-3 md:px-6 py-2 md:py-3 rounded-xl font-black text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all flex items-center gap-2",
               activeView === "youtube" ? "bg-red-600 text-white shadow-lg" : "text-white/40 hover:text-white/60"
             )}
           >
@@ -886,6 +937,23 @@ export default function DrivingMode({
               </button>
             </div>
           </>
+        ) : activeView === "radar" ? (
+          <TrafficRadarOverlay
+            uiLanguage={uiLanguage}
+            preferences={preferences}
+            userCoords={userCoords}
+            nearbyAlerts={nearbyAlerts}
+            activeAlert={localActiveAlert || trafficAlert}
+            isAlertAudioPlaying={isAlertAudioPlaying}
+            isGeoFenceActive={isGeoFenceActive}
+            onTriggerAlertAudio={(script) => {
+              playAlertAudio(script);
+              triggerSuccessFeedback(uiLanguage === "vi" ? "🚨 Đang phát bản tin cắt ngang..." : "🚨 Splicing audio alert...");
+            }}
+            onRefreshTraffic={refreshTraffic}
+            onDismissAlert={dismissAlert}
+            onBackToBriefing={() => setActiveView("briefing")}
+          />
         ) : (
           <YouTubeEntertainmentTab 
             isDucked={isListening}
@@ -1018,8 +1086,18 @@ export default function DrivingMode({
                 </div>
 
                 <div className="p-3 bg-white/5 rounded-2xl border border-white/10 space-y-1">
-                  <span className="font-extrabold text-purple-400 uppercase tracking-wider block">📺 Chuyển màn hình & Trợ lý</span>
+                  <span className="font-extrabold text-purple-400 uppercase tracking-wider block">📺 Chuyển màn hình & Trợ lý AI</span>
                   <p className="text-zinc-300">"Cast ơi mở bản tin" / "Cast ơi mở youtube" / "Cast ơi gọi trợ lý"</p>
+                </div>
+
+                <div className="p-3 bg-white/5 rounded-2xl border border-white/10 space-y-1">
+                  <span className="font-extrabold text-cyan-400 uppercase tracking-wider block">🗺️ Rá-đa & Giao thông Không gian (Sprint 5.0)</span>
+                  <p className="text-zinc-300">"Cast ơi mở rá-đa" / "Cast ơi kiểm tra đường" / "Cast ơi tình hình giao thông" / "Cast ơi mở bản đồ"</p>
+                </div>
+
+                <div className="p-3 bg-white/5 rounded-2xl border border-white/10 space-y-1">
+                  <span className="font-extrabold text-indigo-400 uppercase tracking-wider block">🧠 AI Agent Rảnh Tay (Sprint 4.1)</span>
+                  <p className="text-zinc-300">"Cast ơi giải thích thêm" / "Cast ơi tóm tắt nhanh" / "Cast ơi nói chi tiết hơn"</p>
                 </div>
 
                 <div className="p-3 bg-white/5 rounded-2xl border border-white/10 space-y-1">

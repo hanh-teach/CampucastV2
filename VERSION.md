@@ -1,5 +1,40 @@
 # CommuteCast Version History
 
+## 8.3.0-Stable (2026-09-01)
+- **Status**: Production Stable — Enterprise Multi-Tenant & Team Co-Production Platform.
+- **Sprint**: Enterprise Multi-Tenant & Team Co-Production Platform (Sprint 6.0)
+- **Major Capability**:
+  - **Multi-Tenant Organization Management (`src/types.ts`, `src/services/enterpriseService.ts`)**: Enterprise workspaces supporting custom organizations (e.g. VinGroup, FPT Corporation, TechCommute Enterprise), tiered subscriptions (Enterprise, Pro, Starter), department segmentation, and custom brand gradients.
+  - **Role-Based Access Control (RBAC) & Member Management (`src/components/EnterpriseTeamHub.tsx`)**: 4-tier granular role system (`station_lead`, `producer`, `audio_engineer`, `listener`) with automated permission enforcement and member invitation/promotion workflows.
+  - **Enterprise Broadcast Channel Stations**: Multi-channel broadcast management (`daily_morning`, `daily_evening`, `instant_alert`) with auto-publish scheduling, listener telemetry, and custom target department routing.
+  - **Executive Editorial Approval Gate**: Centralized review queue for submitted news packages, audio preview, full AI script reader, and one-click **"DUYỆT & PHÁT SÓNG (APPROVE & AIR)"** or revision feedback mechanisms.
+  - **Enterprise Analytics & Reach Dashboard**: Responsive Recharts visual analytics tracking 7-day listener volume trends, department engagement percentage breakdowns, total commute hours saved, and broadcast completion rates.
+
+## 8.2.0-Stable (2026-09-01)
+- **Status**: Production Stable — Geo-Spatial Audio & Real-time Traffic Overlay.
+- **Sprint**: Geo-Spatial Audio & Real-time Traffic Overlay (Sprint 5.0)
+- **Major Capability**:
+  - **Interactive Geo-Spatial Traffic Radar (`src/components/TrafficRadarOverlay.tsx`)**: Rotating radar sweep scanner with concentric geofence distance rings (1km, 3km, 8km, 15km), vehicle telemetry blip, live GPS coordinates, and real-time traffic flow indicators.
+  - **Dynamic Audio Splicing & Break-In Overlay (`src/components/DrivingMode.tsx`, `src/hooks/useTrafficAlerts.ts`)**: Real-time interruption engine triggering high-priority spoken traffic bulletins with auto audio ducking and instant playback resumption when entering incident zones.
+  - **Automotive Car HUD Navigation & Voice Control (`src/components/DrivingMode.tsx`, `src/utils/parseVoiceCommand.ts`)**: Integrated direct HUD Tab Switcher (`RÁ-ĐA` / `RADAR`) and voice intent handler (`"Cast ơi mở rá-đa"`, `"Cast ơi kiểm tra đường"`, `"Cast ơi tình hình giao thông"`).
+
+## 8.1.0-Stable (2026-09-01)
+- **Status**: Production Stable — Hands-Free Voice Agent & Interactive Automotive Assistant.
+- **Sprint**: Hands-Free Voice Agent & Interactive Automotive Assistant (Sprint 4.1)
+- **Major Capability**:
+  - **Conversational Voice Parser Expansion (`src/utils/parseVoiceCommand.ts`)**: Added specialized voice intent actions (`EXPLAIN_DEEPER` / `SUMMARIZE_FAST`) with resilient Vietnamese & English phonetic matching.
+  - **Dynamic Audio Ducking & Hands-free Feedback (`src/components/DrivingMode.tsx`)**: Implemented automated speech ducking down to 15% volume during voice listening/assistant speech and immediate voice feedback.
+  - **Interactive HUD Voice Command Reference (`src/components/DrivingMode.tsx`)**: Added dedicated HUD quick-launcher for Voice Command Reference guide detailing all speech controls and shortcuts.
+
+## 8.0.0-Stable (2026-09-01)
+- **Status**: Production Stable — Duration-Adaptive Audio & Zero-Latency Pre-Caching Engine.
+- **Sprint**: Duration-Adaptive & Zero-Latency Pre-caching (Sprint 4.0)
+- **Major Capability**:
+  - **Dynamic Duration Snapping & Pacing Model (`server.ts`, `src/types.ts`)**: Integrated math-precise duration constraints (`targetDurationMinutes` from 1 to 45 mins) and pacing profiles (`relaxed`: 120 wpm, `standard`: 140 wpm, `brisk`: 160 wpm) calculating target word counts and chapter lengths injected directly into the Gemini prompt structure.
+  - **Production Pipeline Adaptive Audio Rendering (`src/services/productionPipeline.ts`)**: Extended audio synthesis pipeline with automated manifest registration and seamless background pre-caching.
+  - **Zero-Latency Audio Manifest & LRU Cache (`src/services/offlineStorageService.ts`)**: Built `MissionAudioManifest` IndexedDB store with automated LRU storage eviction (250MB / 72hr quota protection) ensuring instant zero-latency playback even under throttled or completely offline networks.
+  - **Intuitive UX & Mission Studio Integration (`src/components/PreferencesForm.tsx`, `src/components/views/MissionTabView.tsx`)**: Added quick duration preset buttons, custom slider, pacing selector, and visual offline pre-cached status indicators across Draft Editor and Publish ready decks.
+
 ## 7.105.12-Stable (2026-08-22)
 - **Status**: Production Stable — Real-Time Sync Conflict Toast Notification System.
 - **Sprint**: Real-Time Conflict Toast Notifications (Sprint 5.21.12)

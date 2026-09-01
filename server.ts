@@ -742,6 +742,13 @@ app.post("/api/summarize", async (req, res): Promise<any> => {
     }
 
     const targetDuration = preferences?.targetDuration || "medium";
+    const targetDurationMinutes = Number(preferences?.targetDurationMinutes) || (targetDuration === "short" ? 3 : targetDuration === "long" ? 15 : 6);
+    const pacingProfile = preferences?.pacingProfile || "balanced"; // 'dense' | 'balanced' | 'relaxed'
+    const wordsPerMin = pacingProfile === "dense" ? 160 : pacingProfile === "relaxed" ? 120 : 140;
+    const targetWordCount = Math.round(targetDurationMinutes * wordsPerMin);
+    const targetChapterCount = targetDurationMinutes <= 3 ? 2 : targetDurationMinutes <= 7 ? 3 : targetDurationMinutes <= 15 ? 4 : 5;
+    const wordsPerChapter = Math.round((targetWordCount * 0.75) / targetChapterCount);
+
     const tone = preferences?.tone || "conversational";
     const focus = preferences?.focus || "general overview";
     const commuteType = preferences?.commuteType || "driving";
@@ -901,12 +908,12 @@ app.post("/api/summarize", async (req, res): Promise<any> => {
       }
     }
 
-    const lengthGuidelines =
-      targetDuration === "short"
-        ? "Keep it brief. Write an introduction, exactly 1-2 concise chapters with 200-300 characters each, and a short outro. Total length should be around 1-2 minutes of speech."
-        : targetDuration === "long"
-        ? "Deep dive. Write an introduction, 4-5 core chapters with 350-450 characters each, and an outro. Total length should be deep and rich, around 5-7 minutes of speech."
-        : "Standard. Write an introduction, 2-3 core chapters with 300-400 characters each, and an outro. Total length should be around 3-4 minutes of speech.";
+    const lengthGuidelines = `[STRICT DURATION SNAPPING & PACING CONSTRAINT]
+- Target commute duration: ${targetDurationMinutes} minutes (Pacing Profile: ${pacingProfile}, ~${wordsPerMin} words/minute).
+- Target total spoken word count: exactly around ${targetWordCount} words combined across introduction, chapters, and conclusion.
+- Chapter structure: Exactly ${targetChapterCount} core chapters.
+- Each chapter's 'scriptText' should contain approximately ${wordsPerChapter} words.
+- This precise length is critical: The briefing must finish naturally as the commuter arrives at their destination without cutting off or finishing prematurely.`;
 
     let languageInstructions = "";
     if (language === "vi") {
@@ -1145,6 +1152,13 @@ Keep scriptText very natural for speaking. Do not include markdown bold or heade
     }
 
     const payload = JSON.parse(outputText);
+    payload.targetDurationMinutes = targetDurationMinutes;
+    // Calculate actual words in output
+    const introWords = (payload.introduction || "").trim().split(/\s+/).filter(Boolean).length;
+    const chapWords = (payload.chapters || []).reduce((acc: number, c: any) => acc + (c.scriptText || "").trim().split(/\s+/).filter(Boolean).length, 0);
+    const outroWords = (payload.conclusion || "").trim().split(/\s+/).filter(Boolean).length;
+    payload.estimatedTotalWords = introWords + chapWords + outroWords;
+
     return res.json(payload);
   } catch (error: any) {
     console.error("Summarization error:", error);

@@ -47,7 +47,8 @@ import {
   Wrench
 } from "lucide-react";
 
-import { SummaryPreferences, SavedSummary, SummaryPayload, PublishedEpisode, ExecutionState, ExecutionStateEvent, TabType, DeviceType, WorkspaceSubTab, MissionStudioSubTab, LibrarySubTab, AICenterSubTab, SettingsSubTab } from "./types";
+import { SummaryPreferences, SavedSummary, SummaryPayload, PublishedEpisode, ExecutionState, ExecutionStateEvent, TabType, DeviceType, WorkspaceSubTab, MissionStudioSubTab, LibrarySubTab, AICenterSubTab, SettingsSubTab, EnterpriseSubTab } from "./types";
+import { EnterpriseTeamHub } from "./components/EnterpriseTeamHub";
 
 import { SAMPLE_ARTICLES_PRESETS } from "./utils";
 import { RssNotificationBanner } from "./components/views/RssNotificationBanner";
@@ -1040,7 +1041,8 @@ const handleApplyPreset = (index: number) => {
                  { id: "personas", label: uiLanguage === "vi" ? "Nhân vật" : "Personas" },
                  { id: "voice", label: uiLanguage === "vi" ? "Giọng đọc" : "Voice" },
                  { id: "memory", label: uiLanguage === "vi" ? "Bộ nhớ" : "Memory" },
-                 { id: "automation", label: uiLanguage === "vi" ? "Tự động hóa" : "Automation" }
+                 { id: "automation", label: uiLanguage === "vi" ? "Tự động hóa" : "Automation" },
+                 { id: "enterprise", label: uiLanguage === "vi" ? "Doanh nghiệp" : "Enterprise" }
                ]}
                activeTab={aiCenterSubTab}
                onTabChange={(id) => setAiCenterSubTab(id as any)}
@@ -1300,6 +1302,39 @@ const handleApplyPreset = (index: number) => {
                      : "Create and manage 'virtual reporters' with unique personalities, viewpoints, and storytelling styles for your briefings."}
                  />
                )}
+               {aiCenterSubTab === "enterprise" && (
+                 <EnterpriseTeamHub
+                   uiLanguage={uiLanguage}
+                   onSendToStudio={(script, title) => {
+                     setNewsContent(script);
+                     setTargetNewsTitle(title);
+                     setActiveTab("mission_studio");
+                     setMissionStudioSubTab("draft");
+                   }}
+                   onPlayBroadcastAudio={(title) => {
+                     setTargetNewsTitle(title);
+                     handleGenerateAudio();
+                   }}
+                 />
+               )}
+            </div>
+          )}
+
+         {activeTab === "enterprise" && (
+            <div className="space-y-8 animate-fade-in pb-20">
+              <EnterpriseTeamHub
+                uiLanguage={uiLanguage}
+                onSendToStudio={(script, title) => {
+                  setNewsContent(script);
+                  setTargetNewsTitle(title);
+                  setActiveTab("mission_studio");
+                  setMissionStudioSubTab("draft");
+                }}
+                onPlayBroadcastAudio={(title) => {
+                  setTargetNewsTitle(title);
+                  handleGenerateAudio();
+                }}
+              />
             </div>
           )}
 

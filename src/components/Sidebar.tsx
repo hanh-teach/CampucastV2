@@ -14,7 +14,8 @@ import {
   AudioLines,
   FolderOpen,
   Zap,
-  Pin
+  Pin,
+  Building2
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { Badge } from "./ui/Badge";
@@ -76,11 +77,12 @@ export default function Sidebar({
       mission_studio: "Studio Nhiệm vụ",
       library: "Thư viện",
       ai_center: "Trung tâm AI",
+      enterprise: "Doanh Nghiệp",
       settings: "Cài đặt",
       expand: "Mở rộng",
       collapse: "Thu gọn",
       menu: "Danh mục",
-      edition: "PHIÊN BẢN CÁ NHÂN",
+      edition: "PHIÊN BẢN DOANH NGHIỆP",
       pin: "Ghim mở",
       unpin: "Bỏ ghim"
     },
@@ -89,11 +91,12 @@ export default function Sidebar({
       mission_studio: "Mission Studio",
       library: "Library",
       ai_center: "AI Center",
+      enterprise: "Enterprise",
       settings: "Settings",
       expand: "Expand",
       collapse: "Collapse",
       menu: "Menu",
-      edition: "PERSONAL EDITION",
+      edition: "ENTERPRISE EDITION",
       pin: "Pin Open",
       unpin: "Unpin"
     }
@@ -104,6 +107,7 @@ export default function Sidebar({
     { id: "mission_studio", label: labels.mission_studio, icon: Mic, badge: unreadRssCount > 0 ? unreadRssCount : null },
     { id: "library", label: labels.library, icon: Library, badge: unreadQueueCount > 0 ? unreadQueueCount : null },
     { id: "ai_center", label: labels.ai_center, icon: BrainCircuit, badge: null },
+    { id: "enterprise", label: labels.enterprise, icon: Building2, badge: null },
     { id: "settings", label: labels.settings, icon: Settings, badge: null }
   ] as const;
 

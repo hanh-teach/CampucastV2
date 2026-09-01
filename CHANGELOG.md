@@ -1,3 +1,61 @@
+## [8.3.0-Stable] - 2026-09-01
+### Added & Enhanced (Enterprise Multi-Tenant & Team Co-Production Platform Sprint 6.0)
+- **Enterprise Multi-Tenant Workspace (`src/types.ts`, `src/services/enterpriseService.ts`)**:
+  - Implemented multi-tenant organization switching (VinGroup, FPT Corporation, TechCommute Enterprise) with tier badging, department tags, and localStorage-backed persistence.
+  - Added full data models for organizations, broadcast channels, approval queues, team members, and telemetry reach analytics.
+- **Enterprise Team Hub & RBAC Workstation (`src/components/EnterpriseTeamHub.tsx`)**:
+  - Built interactive 4-station workspace: Kênh Phát Thanh (Channels), Hàng Đợi Duyệt Tin (Approval Queue), Đội Ngũ & Phân Quyền (Team & RBAC), and Phân Tích Hiệu Quả (Analytics & Reach).
+  - Implemented 4-tier Role-Based Access Control (`station_lead`, `producer`, `audio_engineer`, `listener`) with persona switcher for testing and dynamic action authorization.
+- **Executive Editorial Approval Gate**:
+  - Created review workflow with script reader modal, word count/duration estimation, and one-click "DUYỆT & PHÁT SÓNG (APPROVE & AIR)" or "YÊU CẦU CHỈNH SỬA (REJECT)" buttons.
+  - Integrated direct bridge to Mission Studio for script drafting and audio preview.
+- **Enterprise Analytics & Reach Dashboard**:
+  - Built Recharts data visualizations including 7-day listener engagement trend area chart and department interaction breakdown horizontal bar chart.
+  - Displayed KPI cards: Total Commute Hours Saved, Active Commuter Reach, Average Completion Rate, and Total Episodes Aired.
+- **Global Navigation & Branding Updates (`src/components/Sidebar.tsx`, `src/components/Header.tsx`, `src/App.tsx`)**:
+  - Added dedicated "Doanh Nghiệp / Enterprise" navigation item with `Building2` icon in Sidebar, AI Center subtabs, and dynamic header context indicator.
+
+## [8.2.0-Stable] - 2026-09-01
+### Added & Enhanced (Geo-Spatial Audio & Real-time Traffic Overlay Sprint 5.0)
+- **Interactive Geo-Spatial Traffic Radar (`src/components/TrafficRadarOverlay.tsx`)**:
+  - Implemented real-time rotating radar sweep display with concentric geofence distance rings (1km, 3km, 8km, 15km).
+  - Added live vehicle telemetry blip, speed indicators (km/h), compass heading, and incident risk heat spots.
+  - Provided incident detail inspection with estimated delay minutes, speed degradation impact, and recommended alternative detour routing.
+- **Dynamic Audio Splicing & Geo-Spatial Break-In Engine (`src/components/DrivingMode.tsx`, `src/hooks/useTrafficAlerts.ts`)**:
+  - Built one-tap and automatic audio interrupt triggers for severe traffic warnings within the active geofence.
+  - Handled automated background audio ducking and seamless return upon bulletin completion.
+- **Automotive HUD Tab & Voice Navigation Integration (`src/components/DrivingMode.tsx`, `src/utils/parseVoiceCommand.ts`)**:
+  - Added direct `RÁ-ĐA` / `RADAR` tab button into the Car HUD stage header.
+  - Expanded voice parser to support `"Cast ơi mở rá-đa"`, `"Cast ơi kiểm tra đường"`, `"Cast ơi tình hình giao thông"`, and `"Cast ơi mở bản đồ"`.
+
+## [8.1.0-Stable] - 2026-09-01
+### Added & Enhanced (Hands-Free Voice Agent & Interactive Automotive Assistant Sprint 4.1)
+- **Hands-Free Voice Agent Commands (`src/utils/parseVoiceCommand.ts`)**:
+  - Implemented `EXPLAIN_DEEPER` ("giải thích thêm", "nói rõ hơn", "deep dive") and `SUMMARIZE_FAST` ("tóm tắt nhanh", "quick summary") intent handlers.
+  - Enhanced phonetic token stripping and Vietnamese accent-insensitive matching algorithms.
+- **Dynamic Audio Ducking & Speech Feedback (`src/components/DrivingMode.tsx`)**:
+  - Automatically ducked background audio down to 15% during voice recognition and AI speech playback.
+  - Provided immediate haptic and audible confirmation beeps with TTS responses.
+- **HUD Voice Command Reference & Help Modal (`src/components/DrivingMode.tsx`)**:
+  - Added dedicated `VOICE GUIDE` / `LỆNH GIỌNG NÓI` launcher button to the Driving Mode HUD header.
+  - Expanded reference modal with complete categorized list of hands-free driving voice commands.
+
+## [8.0.0-Stable] - 2026-09-01
+### Added & Enhanced (Duration-Adaptive & Zero-Latency Audio Pre-caching Sprint 4.0)
+- **Duration Constraint & Adaptive Word Target Engine (`server.ts`, `src/types.ts`)**:
+  - Implemented mathematical duration snapping (`targetDurationMinutes`: 1 to 45 minutes).
+  - Added pacing profiles (`relaxed`: 120 WPM, `standard`: 140 WPM, `brisk`: 160 WPM).
+  - Server-side Gemini prompt enforces strict word quotas per chapter to guarantee exact commute duration matching.
+- **Zero-Latency Offline Pre-caching Pipeline (`src/services/offlineStorageService.ts`, `src/services/productionPipeline.ts`)**:
+  - Created `MissionAudioManifest` IndexedDB storage contract with fast lookup for pre-synthesized audio segments.
+  - Implemented LRU (Least Recently Used) automatic cache eviction (250MB / 72hr lifecycle limit) to safeguard browser storage quotas.
+  - Added background pre-caching trigger in `productionPipeline.ts` for instant zero-latency playback.
+- **Mission Studio & Preferences UI Integration (`src/components/PreferencesForm.tsx`, `src/components/views/MissionTabView.tsx`)**:
+  - Added 3m / 5m / 10m / 15m duration preset buttons with custom slider control.
+  - Added Pacing Profile selection radio group with calculated WPM badges.
+  - Added toggle for Zero-Latency Offline Pre-caching.
+  - Embedded live duration metric cards and offline cache readiness indicators in the Mission Studio draft editor and publish fulfillment view.
+
 ## [7.105.12-Stable] - 2026-08-22
 ### Added & Enhanced (Real-Time Sync Conflict Toast Notification System)
 - **Sync Conflict Toast (`src/components/SyncConflictToast.tsx`)**: Created a real-time toast notification component that instantly detects new sync conflicts from the sync service, animating in at the bottom right with direct action buttons to open the Conflict Resolve Dialog or Conflict Log modal.

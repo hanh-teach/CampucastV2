@@ -670,6 +670,26 @@ export default function MissionTabView({
       ) : activePayload ? (
         <div className="space-y-6">
           <div className="bg-surface-bg border border-border-subtle rounded-2xl p-6 shadow-sm space-y-4">
+             {/* Duration & Word Count Metric Header */}
+             <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs">
+               <div className="flex items-center gap-2">
+                 <Clock className="w-4 h-4 text-amber-500" />
+                 <span className="font-bold text-text-main">
+                   {uiLanguage === "vi" ? "Hành trình khớp (Adaptive Duration):" : "Commute Snapped Duration:"}
+                 </span>
+                 <span className="px-2 py-0.5 rounded-md font-bold bg-amber-500 text-neutral-900">
+                   {activePayload.targetDurationMinutes || (preferences.targetDurationMinutes || (preferences.targetDuration === "short" ? 3 : preferences.targetDuration === "long" ? 15 : 6))} {uiLanguage === "vi" ? "phút" : "mins"}
+                 </span>
+               </div>
+               <div className="text-text-muted font-medium">
+                 {uiLanguage === "vi" ? "Dung lượng kịch bản:" : "Script word count:"} <strong className="text-text-main">
+                   {(activePayload.introduction?.split(/\s+/).filter(Boolean).length || 0) +
+                    (activePayload.chapters?.reduce((acc: number, c: any) => acc + (c.scriptText || "").split(/\s+/).filter(Boolean).length, 0) || 0) +
+                    (activePayload.conclusion?.split(/\s+/).filter(Boolean).length || 0)} {uiLanguage === "vi" ? "từ" : "words"}
+                 </strong>
+               </div>
+             </div>
+
              <label className="text-xs font-black uppercase tracking-widest text-text-muted">Title</label>
              <input type="text" value={activeTitle} onChange={(e) => updateDraftTitle(e.target.value)} className="w-full bg-surface-subtle text-text-main p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-accent/50 font-bold" />
              
@@ -1100,7 +1120,12 @@ export default function MissionTabView({
            )}
          </button>
          <h3 className="text-lg font-black tracking-tight mb-2 text-text-main">Mission Ready</h3>
-         <p className="text-text-muted mb-8">{pt.scriptReady}</p>
+         <p className="text-text-muted mb-3">{pt.scriptReady}</p>
+         
+         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold mb-6">
+           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+           <span>{uiLanguage === "vi" ? "⚡ Đã lưu bộ đệm Zero-Latency (Sẵn sàng Offline)" : "⚡ Zero-Latency Audio Pre-cached (Offline Ready)"}</span>
+         </div>
          
          <div className="flex justify-center gap-4">
            <Button onClick={handleExportWav} disabled={isExporting} variant="outline" className="uppercase tracking-widest text-xs font-black px-6">
