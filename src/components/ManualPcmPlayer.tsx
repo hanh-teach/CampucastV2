@@ -38,7 +38,7 @@ import { useMotionDetection } from "../hooks/useMotionDetection";
 const DrivingMode = React.lazy(() => import("./DrivingMode"));
 import { motion, AnimatePresence } from "motion/react";
 const ShareModal = React.lazy(() => import("./ShareModal"));
-const ClearDataButton = React.lazy(() => import('./ClearDataButton').then(m => ({ default: m.ClearDataButton })));
+import { ClearDataButton } from "./ClearDataButton";
 import { cn } from "../lib/utils";
 import { Card } from "./ui/Card";
 import { Button } from "./ui/Button";
@@ -2372,23 +2372,27 @@ useEffect(() => {
       </div>
 
       {briefingId && (
-        <ShareModal
-          isOpen={isShareModalOpen}
-          onClose={() => setIsShareModalOpen(false)}
-          briefingId={briefingId}
-          uiLanguage={uiLanguage}
-        />
+        <React.Suspense fallback={null}>
+          <ShareModal
+            isOpen={isShareModalOpen}
+            onClose={() => setIsShareModalOpen(false)}
+            briefingId={briefingId}
+            uiLanguage={uiLanguage}
+          />
+        </React.Suspense>
       )}
 
       {showDiagnosticModal && (
-        <AudioNormalizationDiagnostic
-          isOpen={showDiagnosticModal}
-          onClose={() => setShowDiagnosticModal(false)}
-          audioChunks={audioChunks}
-          payload={payload}
-          currentPlayingIndex={activeSegmentIndex}
-          uiLanguage={uiLanguage}
-        />
+        <React.Suspense fallback={null}>
+          <AudioNormalizationDiagnostic
+            isOpen={showDiagnosticModal}
+            onClose={() => setShowDiagnosticModal(false)}
+            audioChunks={audioChunks}
+            payload={payload}
+            currentPlayingIndex={activeSegmentIndex}
+            uiLanguage={uiLanguage}
+          />
+        </React.Suspense>
       )}
     </>
   );

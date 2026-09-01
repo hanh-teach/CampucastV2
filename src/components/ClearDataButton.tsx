@@ -1,6 +1,6 @@
-import { colors } from "../foundation/tokens/colors";
 import React, { useState } from 'react';
 import { Trash2 } from 'lucide-react';
+import { colors } from "../foundation/tokens/colors";
 
 export const ClearDataButton: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -56,6 +56,7 @@ export const ClearDataButton: React.FC = () => {
 
   return (
     <button
+      id="clear-local-data-btn"
       onClick={handleClearData}
       disabled={isLoading}
       className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed border"
@@ -66,3 +67,5 @@ export const ClearDataButton: React.FC = () => {
     </button>
   );
 };
+
+export default ClearDataButton;

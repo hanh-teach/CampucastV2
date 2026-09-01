@@ -19,12 +19,21 @@ export default defineConfig(() => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
-        'react': path.resolve(__dirname, './node_modules/react'),
-        'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
-        'react/jsx-runtime': path.resolve(__dirname, './node_modules/react/jsx-runtime'),
         ...(process.env.VITEST ? { 'react-dom/test-utils': path.resolve(__dirname, './tests/act-alias.ts') } : {}),
       },
-      dedupe: ['react', 'react-dom'],
+      dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'],
+    },
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'react-dom/client',
+        'react/jsx-runtime',
+        'react/jsx-dev-runtime',
+        'lucide-react',
+        'motion/react',
+        'recharts',
+      ],
     },
     server: {
       // Nếu disable HMR → false, ngược lại → chỉ tắt overlay nhưng vẫn bật HMR
