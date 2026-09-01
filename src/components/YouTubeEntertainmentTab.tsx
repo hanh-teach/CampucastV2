@@ -36,14 +36,14 @@ interface YouTubeEntertainmentTabProps {
   voiceCommandAction?: { type: string; timestamp: number } | null;
 }
 
-export const YouTubeEntertainmentTab = React.memo<YouTubeEntertainmentTabProps>(({
+export const YouTubeEntertainmentTab = React.memo(function YouTubeEntertainmentTab({
   isDucked,
   onDuckingChange,
   uiLanguage,
   voiceSearchQuery,
   onClearSearch,
   voiceCommandAction
-}) => {
+}: YouTubeEntertainmentTabProps) {
   const [isParkedMode, setIsParkedMode] = React.useState(false);
   const [searchStatus, setSearchStatus] = React.useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");

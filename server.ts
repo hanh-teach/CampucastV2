@@ -83,9 +83,10 @@ app.use(helmet({
 }));
 
 // Create rate limiters
+const isTestEnv = process.env.NODE_ENV === "test";
 const resourceLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 20,
+  max: isTestEnv ? 100000 : 20,
   message: { error: "Too many requests, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
@@ -93,7 +94,7 @@ const resourceLimiter = rateLimit({
 
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 500,
+  max: isTestEnv ? 100000 : 500,
   message: { error: "Too many API requests, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,

@@ -26,6 +26,9 @@ vi.mock('../src/services/syncService', () => ({
   isOnline: vi.fn().mockReturnValue(true),
   abortSync: vi.fn().mockReturnValue(true),
   getSyncQueue: vi.fn().mockResolvedValue([]),
+  getSyncHistory: vi.fn().mockReturnValue([]),
+  clearSyncHistory: vi.fn(),
+  recordSyncHistoryEvent: vi.fn(),
 }));
 
 describe('useSync', () => {

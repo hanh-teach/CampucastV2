@@ -69,10 +69,17 @@ export const TelemetryDashboard: React.FC<TelemetryDashboardProps> = ({
     const execTime = (startEvent && totalExecution) ? totalExecution.timestamp - startEvent.timestamp : 0;
     const waitRatio = execTime > 0 ? (ttfp / execTime).toFixed(2) : "0.00";
 
+    const ttsEvent = events.find(e => e.type === "tts_synthesis_duration");
+    const ttsLatencyMs = ttsEvent && ttsEvent.payload && typeof ttsEvent.payload.durationMs === "number"
+      ? ttsEvent.payload.durationMs
+      : (stats.sessionStats?.audio?.ttsSynthesis || 0);
+    const ttsLatency = (ttsLatencyMs / 1000).toFixed(2) + "s";
+
     return {
       ttff: (ttff / 1000).toFixed(2) + "s",
       ttfp: (ttfp / 1000).toFixed(2) + "s",
       waitRatio,
+      ttsLatency,
       lct: "1.2s",
       decisionYield: "4/5",
       decisionDensity: "82%",
@@ -166,10 +173,11 @@ export const TelemetryDashboard: React.FC<TelemetryDashboardProps> = ({
                 sub="Perceived Wait"
               />
               <KPICard 
-                icon={<RefreshCw size={16} style={{ color: colors.success }} />}
-                label="Recovery Rate"
-                value={`${metrics.recoveryRate}%`}
-                sub="Confidence Recovery"
+                icon={<BarChart3 size={16} style={{ color: colors.interactive }} />}
+                label="TTS Latency"
+                value={metrics.ttsLatency}
+                sub="Synthesis Phase Duration"
+                alert={parseFloat(metrics.ttsLatency) > 10}
               />
               <KPICard 
                 icon={<ShieldCheck size={16} style={{ color: colors.interactive }} />}

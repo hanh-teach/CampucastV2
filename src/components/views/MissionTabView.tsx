@@ -1,6 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import { CoHostBubble } from "../CoHostBubble";
-import { motion, AnimatePresence } from "motion/react";
 import { 
   FileText, 
   Trash2, 
@@ -37,26 +35,114 @@ import {
   Plus
 } from "lucide-react";
 import { getSingleTagColor } from "./BriefingItem";
-const TopicSuggestions = React.lazy(() => import("../TopicSuggestions"));
-const RSSManager = React.lazy(() => import("../RSSManager"));
+import TopicSuggestions from "../TopicSuggestions";
+import RSSManager from "../RSSManager";
 import { SAMPLE_ARTICLES_PRESETS, base64ToArrayBuffer, encodeWavHeader } from "../../utils";
 import { exportBriefingAsWav } from "../../utils/audioExport";
 import { PreviewMusicSynth } from "../../utils/musicSynth";
-const ExecutionStateView = React.lazy(() => import("../ExecutionStateView").then(m => ({ default: m.ExecutionStateView })));
-const ManualPcmPlayer = React.lazy(() => import("../ManualPcmPlayer"));
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { PageHeader } from "../ui/PageHeader";
 import { cn } from "../../lib/utils";
-import { SessionEngine } from "../../features/session/SessionEngine";
-import { MissionCommandBar } from "../MissionCommandBar";
-import { CapabilityId, CapabilityRegistry } from "../../features/studio/CapabilityRegistry";
-
-import { PageTemplate } from "../../foundation/PageTemplate";
-import { AdaptiveGrid } from "../../foundation/AdaptiveGrid";
-import { AdaptiveCard } from "../../foundation/AdaptiveCard";
 import { colors } from "../../foundation/tokens/colors";
+
+interface ProgressiveFeedbackProps {
+  progress: string;
+  uiLanguage: string;
+  step: "idle" | "summarizing" | "synthesizing" | "ready" | "error";
+}
+
+function ProgressiveFeedback({ progress, uiLanguage, step }: ProgressiveFeedbackProps) {
+  const isAudioStage = step === "synthesizing";
+
+  const steps = isAudioStage
+    ? (uiLanguage === "vi"
+        ? ["Chuẩn bị giọng đọc...", "Đang tạo Audio...", "Hoàn tất"]
+        : ["Preparing voice...", "Synthesizing Audio...", "Complete"])
+    : (uiLanguage === "vi"
+        ? ["Đang phân tích...", "Đang tạo Prompt...", "Đang tóm tắt...", "Hoàn tất"]
+        : ["Analyzing...", "Generating Prompt...", "Summarizing...", "Complete"]);
+
+  let activeStep = 0;
+  if (isAudioStage) {
+    if (
+      progress.toLowerCase().includes("audio") ||
+      progress.toLowerCase().includes("tạo âm thanh") ||
+      progress.toLowerCase().includes("synthesiz") ||
+      progress.toLowerCase().includes("synthesis")
+    ) {
+      activeStep = 1;
+    } else if (
+      progress.toLowerCase().includes("complete") ||
+      progress.toLowerCase().includes("hoàn tất") ||
+      progress.toLowerCase().includes("ready")
+    ) {
+      activeStep = 2;
+    }
+  } else {
+    if (progress.toLowerCase().includes("prompt")) {
+      activeStep = 1;
+    } else if (
+      progress.toLowerCase().includes("summariz") ||
+      progress.toLowerCase().includes("tóm tắt")
+    ) {
+      activeStep = 2;
+    } else if (
+      progress.toLowerCase().includes("complete") ||
+      progress.toLowerCase().includes("hoàn tất") ||
+      progress.toLowerCase().includes("ready")
+    ) {
+      activeStep = 3;
+    }
+  }
+
+  return (
+    <div className="w-full max-w-sm space-y-3">
+      {steps.map((stepItem, index) => (
+        <div
+          key={stepItem}
+          className={cn(
+            "flex items-center gap-3 p-3 rounded-xl transition-all",
+            index === activeStep ? "" : "bg-surface-subtle"
+          )}
+          style={
+            index === activeStep
+              ? {
+                  backgroundColor: "color-mix(in srgb, var(--color-accent) 10%, transparent)",
+                  borderColor: "color-mix(in srgb, var(--color-accent) 20%, transparent)",
+                  borderWidth: "1px",
+                }
+              : {}
+          }
+        >
+          <div
+            className={cn(
+              "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black",
+              index === activeStep ? "" : "bg-border-subtle text-text-muted"
+            )}
+            style={
+              index === activeStep
+                ? { backgroundColor: colors.interactive, color: colors.onAccent }
+                : {}
+            }
+          >
+            {index < activeStep ? <CheckCircle className="w-3 h-3" /> : index + 1}
+          </div>
+          <span
+            className={cn(
+              "text-xs font-bold tracking-widest",
+              index === activeStep ? "" : "text-text-muted"
+            )}
+            style={index === activeStep ? { color: colors.interactive } : {}}
+          >
+            {stepItem}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 interface MissionStudioProps {
   uiLanguage: "vi" | "en";
@@ -183,6 +269,7 @@ export default function MissionTabView({
   isPlayerPlaying,
   savedBriefings
 }: MissionStudioProps) {
+  // 1. All State and Ref Hooks at the very top
   const [activeStage, setActiveStage] = useState<number>(1);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isRssModalOpen, setIsRssModalOpen] = useState(false);
@@ -191,13 +278,43 @@ export default function MissionTabView({
   const [isScraping, setIsScraping] = useState(false);
   const [scrapeError, setScrapeError] = useState<string | null>(null);
   const [dateWarning, setDateWarning] = useState<string | null>(null);
-  
-  // Keyword filter states
   const [includeKeywords, setIncludeKeywords] = useState("");
   const [excludeKeywords, setExcludeKeywords] = useState("");
-
   const [publishSuccessId, setPublishSuccessId] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const musicSynthRef = useRef<PreviewMusicSynth | null>(null);
+  const [previewPlayingMusic, setPreviewPlayingMusic] = useState<string | null>(null);
+  const [previewLoadingVoice, setPreviewLoadingVoice] = useState<string | null>(null);
+  const [previewVoiceError, setPreviewVoiceError] = useState<string | null>(null);
+  const [previewPlayingVoice, setPreviewPlayingVoice] = useState<string | null>(null);
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const prevIsGeneratingNews = useRef(isGeneratingNews);
+
+  // 2. All Effect Hooks
+  useEffect(() => {
+    if (musicSynthRef.current && previewPlayingMusic) {
+      musicSynthRef.current.setVolume(preferences?.musicVolume || 50);
+    }
+  }, [preferences?.musicVolume, previewPlayingMusic]);
+
+  const focusAndScrollToTextarea = () => {
+    setTimeout(() => {
+      const textarea = textareaRef.current;
+      if (textarea) {
+        textarea.focus();
+        const length = textarea.value.length;
+        textarea.setSelectionRange(length, length);
+        textarea.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 200);
+  };
+
+  useEffect(() => {
+    if (prevIsGeneratingNews.current && !isGeneratingNews && newsContent) {
+      focusAndScrollToTextarea();
+    }
+    prevIsGeneratingNews.current = isGeneratingNews;
+  }, [isGeneratingNews, newsContent]);
 
   const currentBriefing = savedBriefings?.find(b => b.id === selectedBriefId);
   const isPlayingCurrent = !!(isPlayerPlaying && currentBriefing && selectedBriefId);
@@ -326,10 +443,6 @@ export default function MissionTabView({
     setActivePayload?.(payload);
   };
 
-  // Music preview states
-  const musicSynthRef = useRef<PreviewMusicSynth | null>(null);
-  const [previewPlayingMusic, setPreviewPlayingMusic] = useState<string | null>(null);
-
   const handlePublish = async () => {
     if (!selectedBriefId) return;
     try {
@@ -353,68 +466,6 @@ export default function MissionTabView({
   };
 
   const isProcessing = step === "summarizing" || step === "synthesizing";
-
-  const ProgressiveFeedback = ({ progress, uiLanguage }: { progress: string, uiLanguage: string }) => {
-    const isAudioStage = step === "synthesizing";
-
-    const steps = isAudioStage
-      ? (uiLanguage === 'vi'
-          ? ["Chuẩn bị giọng đọc...", "Đang tạo Audio...", "Hoàn tất"]
-          : ["Preparing voice...", "Synthesizing Audio...", "Complete"])
-      : (uiLanguage === 'vi'
-          ? ["Đang phân tích...", "Đang tạo Prompt...", "Đang tóm tắt...", "Hoàn tất"]
-          : ["Analyzing...", "Generating Prompt...", "Summarizing...", "Complete"]);
-
-    // Basic heuristic to determine active step based on string matching
-    let activeStep = 0;
-    if (isAudioStage) {
-      if (progress.toLowerCase().includes("audio") || progress.toLowerCase().includes("tạo âm thanh") || progress.toLowerCase().includes("synthesiz") || progress.toLowerCase().includes("synthesis")) {
-        activeStep = 1;
-      } else if (progress.toLowerCase().includes("complete") || progress.toLowerCase().includes("hoàn tất") || progress.toLowerCase().includes("ready")) {
-        activeStep = 2;
-      }
-    } else {
-      if (progress.toLowerCase().includes("prompt")) {
-        activeStep = 1;
-      } else if (progress.toLowerCase().includes("summariz") || progress.toLowerCase().includes("tóm tắt")) {
-        activeStep = 2;
-      } else if (progress.toLowerCase().includes("complete") || progress.toLowerCase().includes("hoàn tất") || progress.toLowerCase().includes("ready")) {
-        activeStep = 3;
-      }
-    }
-
-    return (
-      <div className="w-full max-w-sm space-y-3">
-        {steps.map((stepItem, index) => (
-          <div key={stepItem} className={cn(
-            "flex items-center gap-3 p-3 rounded-xl transition-all",
-            index === activeStep ? "" : "bg-surface-subtle"
-          )}
-          style={index === activeStep ? {
-            backgroundColor: "color-mix(in srgb, var(--color-accent) 10%, transparent)",
-            borderColor: "color-mix(in srgb, var(--color-accent) 20%, transparent)",
-            borderWidth: "1px"
-          } : {}}
-          >
-             <div className={cn(
-               "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black",
-               index === activeStep ? "" : "bg-border-subtle text-text-muted"
-             )}
-             style={index === activeStep ? { backgroundColor: colors.interactive, color: colors.onAccent } : {}}
-             >
-                {index < activeStep ? <CheckCircle className="w-3 h-3" /> : index + 1}
-             </div>
-             <span className={cn(
-               "text-xs font-bold tracking-widest",
-               index === activeStep ? "" : "text-text-muted"
-             )}
-             style={index === activeStep ? { color: colors.interactive } : {}}
-             >{stepItem}</span>
-          </div>
-        ))}
-      </div>
-    );
-  };
 
   const stages = {
     vi: [
@@ -480,39 +531,6 @@ export default function MissionTabView({
       [key]: value
     }));
   };
-
-  const [previewLoadingVoice, setPreviewLoadingVoice] = useState<string | null>(null);
-  const [previewVoiceError, setPreviewVoiceError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (musicSynthRef.current && previewPlayingMusic) {
-      musicSynthRef.current.setVolume(preferences?.musicVolume || 50);
-    }
-  }, [preferences?.musicVolume, previewPlayingMusic]);
-  const [previewPlayingVoice, setPreviewPlayingVoice] = useState<string | null>(null);
-  const previewAudioRef = React.useRef<HTMLAudioElement | null>(null);
-
-  // Helper to focus and scroll to the textarea
-  const focusAndScrollToTextarea = () => {
-    setTimeout(() => {
-      const textarea = textareaRef.current;
-      if (textarea) {
-        textarea.focus();
-        const length = textarea.value.length;
-        textarea.setSelectionRange(length, length);
-        textarea.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-    }, 200);
-  };
-
-  // Watch for the transition of isGeneratingNews from true to false
-  const prevIsGeneratingNews = useRef(isGeneratingNews);
-  useEffect(() => {
-    if (prevIsGeneratingNews.current && !isGeneratingNews && newsContent) {
-      focusAndScrollToTextarea();
-    }
-    prevIsGeneratingNews.current = isGeneratingNews;
-  }, [isGeneratingNews, newsContent]);
 
   // --- Reconstructed UI for Mission Studio Subtabs ---
   // Using activeSubTab from App.tsx instead of activeStage
@@ -646,8 +664,8 @@ export default function MissionTabView({
          <h2 className="text-xl font-black tracking-tight text-text-main">{pt.contentTitle}</h2>
       </div>
       {step === "summarizing" ? (
-        <div className="p-12 bg-surface-bg border border-border-subtle rounded-2xl">
-           <ProgressiveFeedback progress={generationProgress} uiLanguage={uiLanguage} />
+        <div className="p-12 bg-surface-bg border border-border-subtle rounded-2xl flex justify-center">
+           <ProgressiveFeedback progress={generationProgress} uiLanguage={uiLanguage} step={step} />
          </div>
       ) : activePayload ? (
         <div className="space-y-6">
@@ -925,8 +943,8 @@ export default function MissionTabView({
          <h2 className="text-xl font-black tracking-tight text-text-main">{pt.voiceTitle}</h2>
       </div>
       {step === "synthesizing" ? (
-        <div className="p-12 bg-surface-bg border border-border-subtle rounded-2xl">
-           <ProgressiveFeedback progress={generationProgress} uiLanguage={uiLanguage} />
+        <div className="p-12 bg-surface-bg border border-border-subtle rounded-2xl flex justify-center">
+           <ProgressiveFeedback progress={generationProgress} uiLanguage={uiLanguage} step={step} />
         </div>
       ) : (
         <>

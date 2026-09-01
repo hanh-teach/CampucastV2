@@ -409,7 +409,8 @@ export interface TelemetryEvent {
     | "perception_survey"
     | "mission_created"
     | "mission_updated"
-    | "mission_deleted";
+    | "mission_deleted"
+    | "tts_synthesis_duration";
   sessionId: string;
   visitorId: string;
   timestamp: number;

@@ -135,7 +135,7 @@ import { formatArticlesForPrompt } from "./services/rssService";
 
 import { RSSArticle } from "./types";
 
-import { Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import SharedBriefingPage from "./components/SharedBriefingPage";
 
@@ -158,8 +158,8 @@ import { Header } from "./components/Header";
 import { useAdaptive } from "./layouts/AdaptiveContext";
 import { AdaptiveNavigation } from "./layouts/AdaptiveNavigation";
 import { WorkspaceSkeleton } from "./components/WorkspaceSkeleton";
-const HomeTabView = lazy(() => import("./components/views/HomeTabView"));
-const MissionTabView = lazy(() => import("./components/views/MissionTabView"));
+import HomeTabView from "./components/views/HomeTabView";
+import MissionTabView from "./components/views/MissionTabView";
 const AssetsTabView = lazy(() => import("./components/views/AssetsTabView"));
 const SuggestionsTabView = lazy(() => import("./components/views/SuggestionsTabView").then(m => ({ default: m.SuggestionsTabView })));
 const MissionIntelligenceWorkspace = lazy(() => import("./components/MissionIntelligenceWorkspace"));
@@ -203,7 +203,7 @@ function HighlightText({ text, query }: { text: string; query: string }) {
   );
 }
 
-export default function App() {
+function AppContent() {
   const { device } = useAdaptive();
   const { theme, resolvedTheme, setTheme } = useTheme();
   const [uiLanguage, setUiLanguage] = useState<"vi" | "en">(() => {
@@ -1819,5 +1819,13 @@ const handleApplyPreset = (index: number) => {
     </Routes>
     <SyncConflictToast uiLanguage={uiLanguage} />
   </>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 }

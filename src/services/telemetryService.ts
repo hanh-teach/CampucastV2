@@ -18,7 +18,8 @@ class TelemetryService {
       download: 0,
       decode: 0,
       queue: 0,
-      play: 0
+      play: 0,
+      ttsSynthesis: 0
     }
   };
 
@@ -77,6 +78,10 @@ class TelemetryService {
 
     if (type === "audio_decode_success") {
       this.currentSessionStats.audio.decode = payload.duration;
+    }
+
+    if (type === "tts_synthesis_duration") {
+      this.currentSessionStats.audio.ttsSynthesis = payload.durationMs;
     }
     
     // Calculate duration for state transitions

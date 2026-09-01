@@ -118,9 +118,9 @@ describe('Real Briefing Flow A (UI -> useBriefingGeneration)', () => {
       </UserPreferencesProvider>
     );
 
-// Switch to Mission Tab
-    const missionTabBtn = await screen.findByText(/Studio Nhiệm vụ/i);
-    fireEvent.click(missionTabBtn);
+    // Switch to Mission Tab
+    const missionTabBtns = await screen.findAllByText(/Studio Nhiệm vụ|Studio/i);
+    fireEvent.click(missionTabBtns[0]);
 
     // Wait for the textarea to appear
     const textarea = await screen.findByPlaceholderText(/Dán nội dung tin tức/i);

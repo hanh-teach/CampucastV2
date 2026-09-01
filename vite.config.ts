@@ -19,7 +19,10 @@ export default defineConfig(() => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
-        'react-dom/test-utils': path.resolve(__dirname, './tests/act-alias.ts'),
+        'react': path.resolve(__dirname, './node_modules/react'),
+        'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
+        'react/jsx-runtime': path.resolve(__dirname, './node_modules/react/jsx-runtime'),
+        ...(process.env.VITEST ? { 'react-dom/test-utils': path.resolve(__dirname, './tests/act-alias.ts') } : {}),
       },
       dedupe: ['react', 'react-dom'],
     },
@@ -33,55 +36,10 @@ export default defineConfig(() => {
       rollupOptions: {
         output: {
           manualChunks(id) {
-            // 1. External Vendor Libraries (node_modules)
+            // Consolidate all external vendor dependencies into one unified chunk
+            // to ensure stable single-copy React context and hook dispatcher initialization
             if (id.includes('node_modules')) {
-              if (id.includes('lucide-react')) {
-                return 'vendor-icons';
-              }
-              if (id.includes('motion') || id.includes('framer-motion')) {
-                return 'vendor-motion';
-              }
-              if (id.includes('docx') || id.includes('jszip') || id.includes('html2canvas')) {
-                return 'vendor-docs';
-              }
-              if (id.includes('@supabase') || id.includes('idb')) {
-                return 'vendor-db';
-              }
               return 'vendor';
-            }
-
-            // 2. Heavy Feature Modules & Views (Isolated Chunks)
-            if (id.includes('src/components/views/HomeTabView') || id.includes('src/components/TrendingBriefings') || id.includes('src/components/SampleBriefings')) {
-              return 'feature-home';
-            }
-            if (id.includes('src/components/views/MissionTabView') || id.includes('src/components/MissionCommandBar')) {
-              return 'feature-mission';
-            }
-            if (id.includes('src/components/views/AssetsTabView') || id.includes('src/components/PodcastManager') || id.includes('src/components/RSSManager')) {
-              return 'feature-assets';
-            }
-            if (id.includes('src/components/views/SettingsTabView') || id.includes('src/features/settings')) {
-              return 'feature-settings';
-            }
-            if (id.includes('src/components/BuildHealthDashboard')) {
-              return 'feature-build-health';
-            }
-            if (id.includes('src/components/TelemetryDashboard') || id.includes('src/components/AnalyticsView') || id.includes('src/features/statistics')) {
-              return 'feature-analytics';
-            }
-            if (id.includes('src/components/ManualPcmPlayer') || id.includes('src/components/CommutePlaylistEngine') || id.includes('src/components/DrivingMode')) {
-              return 'feature-audio-player';
-            }
-
-            // 3. Shared Cross-Cutting Utilities & Stores
-            if (id.includes('src/utils/audioExport') || id.includes('audioExport.ts')) {
-              return 'shared-audio-export';
-            }
-            if (id.includes('src/features/store') || id.includes('features/store.ts')) {
-              return 'shared-store';
-            }
-            if (id.includes('src/services/rssService') || id.includes('services/rssService.ts')) {
-              return 'shared-rss-service';
             }
           },
         },

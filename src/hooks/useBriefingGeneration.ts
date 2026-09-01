@@ -364,6 +364,7 @@ export function useBriefingGeneration({
 
     // Setup fresh AbortController for cancel capability
     abortControllerRef.current = new AbortController();
+    const ttsStartMs = Date.now();
 
     try {
       const artifact = await renderAudio(speechPkg, {
@@ -381,6 +382,9 @@ export function useBriefingGeneration({
           setGenerationProgress(currentProgressLabel);
         }
       });
+
+      const ttsDurationMs = Date.now() - ttsStartMs;
+      telemetry.track("tts_synthesis_duration", { durationMs: ttsDurationMs, segmentsCount: speechPkg.segments.length });
 
       // Clear controller reference upon successful completion
       abortControllerRef.current = null;
